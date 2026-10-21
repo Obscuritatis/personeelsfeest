@@ -204,7 +204,14 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
       ['m-menu', "Tafelmenu's"],
       ['m-bezem', 'Bezemsteel voor de piñata', '', 'Liesbeth'],
       ['m-blokjes', 'Blokjes met nummers', '', 'Leenje'],
-      ['m-haribo', 'Zakjes Haribo en confetti', 'Voor in de piñata']
+      ['m-haribo', 'Zakjes Haribo en confetti', 'Voor in de piñata'],
+      ['m-cactus', 'Houten cactussen'],
+      ['m-deco', 'Decoratie', 'Tafeldoeken, vlaggetjes, enz.'],
+      ['m-ladder', 'Ladder'],
+      ['m-paneel', 'Houten paneel photobooth'],
+      ['m-cocktail', 'Mocktails en cocktails'],
+      ['m-nachos', "Nacho's van de keuken"],
+      ['m-dip', 'Dipsauzen']
     ]}]},
     { id: 'opbouw', title: 'Opbouw', groups: [
       { title: 'Deel 1 · bar en podium', items: [
@@ -360,6 +367,30 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   function saveCustom() { try { localStorage.setItem(CKEY, JSON.stringify(custom)); } catch (e) {} }
   const customIds = key => (custom[key] || []).map(x => x.id);
   const sectionKeys = sec => sec.groups.map((g, gi) => sec.id + '-' + gi);
+  // een eigen item dat intussen een vast punt werd, verdwijnt uit de eigen lijst; het vinkje gaat mee
+  function mergeFixed() {
+    const norm = t => String(t).toLowerCase().replace(/[^a-z0-9à-ÿ]+/g, ' ').trim();
+    const fixed = {};
+    SECTIONS.forEach(sec => sec.groups.forEach(g => g.items.forEach(([id, t, d]) => {
+      fixed[norm(t)] = id;
+      if (d) fixed[norm(t + ' ' + d)] = id;
+    })));
+    let changed = false;
+    Object.keys(custom).forEach(k => {
+      custom[k] = custom[k].filter(x => {
+        const n = norm(x.t);
+        const hit = fixed[n];
+        if (!hit) return true;
+        if (state[x.id] && !state[hit]) state[hit] = state[x.id];
+        delete state[x.id];
+        changed = true;
+        return false;
+      });
+      if (!custom[k].length) delete custom[k];
+    });
+    if (changed) { saveCustom(); saveLocal(); }
+  }
+
   function drawCustom() {
     document.querySelectorAll('.list[data-g]').forEach(ul => {
       ul.querySelectorAll('li.own').forEach(li => li.remove());
@@ -520,7 +551,7 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 
   // ---------- opslaan op dit toestel ----------
   const sync = document.getElementById('sync');
-  loadLocal(); loadCustom(); drawCustom(); render();
+  loadLocal(); loadCustom(); mergeFixed(); drawCustom(); render();
   sync.textContent = 'Bewaard op dit toestel';
   window.addEventListener('storage', e => { if (e.key === LKEY) { loadLocal(); render(); } if (e.key === CKEY) { loadCustom(); drawCustom(); render(); } });
 
