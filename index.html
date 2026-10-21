@@ -115,6 +115,13 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 .crewfoot i { display: inline-block; width: 16px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
 
 /* contact */
+.cdet > summary { list-style: none; cursor: pointer; }
+.cdet > summary::-webkit-details-marker { display: none; }
+.cdet > summary h2::after { content: ""; display: inline-block; width: 9px; height: 9px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-left: 10px; vertical-align: 5px; transition: transform .15s ease; }
+.cdet:not([open]) > summary h2::after { transform: rotate(-45deg); vertical-align: 2px; }
+.cdet > summary:focus-visible { outline: 3px solid var(--pipe); outline-offset: 3px; }
+.cdet[open] > summary { margin-bottom: 8px; }
+.chips a.cchip { background: var(--pipe); color: var(--steel); border-color: var(--pipe); }
 .contacts { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .contacts li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 11px 14px; }
 .contacts li + li { border-top: 1px solid var(--line); }
@@ -344,19 +351,21 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   }
 
   let html = '';
+  const contactHTML = `<section id="contact" aria-labelledby="h-contact"><details class="cdet" id="cdet" open><summary class="sh"><h2 id="h-contact">Contact</h2><span class="n">${CONTACTS.length} · tik om te ${'<span class="op">'}sluiten</span></span></summary>
+    <ul class="contacts">${CONTACTS.map(([rol, naam, tel, mail]) => `<li>
+      <div class="ci"><span class="k">${esc(rol)}</span>${naam ? `<span class="nm">${esc(naam)}</span>` : ''}${tel ? `<span class="num">${esc(tel)}</span>` : ''}${mail ? `<span class="num">${esc(mail)}</span>` : ''}</div>
+      <div class="ca">${tel ? `<a class="call" href="tel:${tel.replace(/[^0-9+]/g, '')}" aria-label="Bel ${esc(naam || rol)}">Bel</a>` : ''}${mail ? `<a class="call ghost" href="mailto:${esc(mail)}" aria-label="Mail ${esc(naam || rol)}">Mail</a>` : ''}${!tel && !mail ? '<span class="none">geen nummer</span>' : ''}</div>
+    </li>`).join('')}</ul></details></section>`;
+  html += contactHTML;
   SECTIONS.forEach((s, i) => {
     html += sectionHTML(s);
     if (s.id === 'opbouw') html += crewHTML();
   });
-  html += `<section id="contact" aria-labelledby="h-contact"><div class="sh"><h2 id="h-contact">Contact</h2></div>
-    <ul class="contacts">${CONTACTS.map(([rol, naam, tel, mail]) => `<li>
-      <div class="ci"><span class="k">${esc(rol)}</span>${naam ? `<span class="nm">${esc(naam)}</span>` : ''}${tel ? `<span class="num">${esc(tel)}</span>` : ''}${mail ? `<span class="num">${esc(mail)}</span>` : ''}</div>
-      <div class="ca">${tel ? `<a class="call" href="tel:${tel.replace(/[^0-9+]/g, '')}" aria-label="Bel ${esc(naam || rol)}">Bel</a>` : ''}${mail ? `<a class="call ghost" href="mailto:${esc(mail)}" aria-label="Mail ${esc(naam || rol)}">Mail</a>` : ''}${!tel && !mail ? '<span class="none">geen nummer</span>' : ''}</div>
-    </li>`).join('')}</ul></section>
+  html += `
     <div id="resetwrap"><button class="reset" type="button" id="reset">Alle vinkjes wissen</button></div>`;
   main.insertAdjacentHTML('beforeend', html);
 
-  chips.innerHTML = SECTIONS.map(s => `<a href="#${s.id}" data-chip="${s.id}">${esc(s.title)}<b data-c="${s.id}"></b></a>`).join('') + '<a href="#helpers">Helpers</a>';
+  chips.innerHTML = '<a href="#contact" class="cchip">Contact</a>' + SECTIONS.map(s => `<a href="#${s.id}" data-chip="${s.id}">${esc(s.title)}<b data-c="${s.id}"></b></a>`).join('') + '<a href="#helpers">Helpers</a>';
 
   function crewHTML() {
     const S = 8, E = 26, span = E - S;
@@ -387,6 +396,13 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     document.getElementById('nowtxt').textContent = inside ? `${present} nu aanwezig` : '';
   }
   drawNow(); setInterval(drawNow, 60000);
+
+  const cdet = document.getElementById('cdet');
+  const setSum = () => { cdet.querySelector('.op').textContent = cdet.open ? 'sluiten' : 'openen'; };
+  try { if (localStorage.getItem('feestdag-contact-dicht') === '1') cdet.open = false; } catch (e) {}
+  setSum();
+  cdet.addEventListener('toggle', () => { setSum(); try { localStorage.setItem('feestdag-contact-dicht', cdet.open ? '0' : '1'); } catch (e) {} });
+  document.querySelector('.cchip').addEventListener('click', () => { cdet.open = true; });
 
   // ---------- staat ----------
   let state = {};          // id -> {by, at}
