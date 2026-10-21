@@ -122,6 +122,13 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 .copy { font: 600 13px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; cursor: pointer; }
 .copy:focus-visible { outline: 2px solid var(--pipe); outline-offset: 2px; }
 
+.install { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: center; background: var(--pipe-soft); border: 1px solid var(--pipe); border-radius: 8px; padding: 12px 14px; }
+.install-txt { display: grid; gap: 2px; font-size: 14px; min-width: 0; }
+.install-txt b { font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: .02em; }
+.installbtn { font: 700 16px var(--display); letter-spacing: .04em; text-transform: uppercase; background: var(--steel); color: var(--on-steel); border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer; }
+.install .ios { grid-column: 1 / -1; margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14.5px; }
+.install .ios svg { width: 17px; height: 17px; vertical-align: -3px; }
+.install .later { grid-column: 1 / -1; justify-self: start; font: 500 13px var(--body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 .reset { justify-self: start; font: 500 14px var(--body); color: var(--red); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
 .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
 .confirm button { font: 600 14px var(--body); border-radius: 6px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
@@ -149,7 +156,17 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     <label class="switch"><input type="checkbox" id="hide"> Verberg afgevinkt</label>
     <span id="sync">Vinkjes laden…</span>
   </div>
-  <p class="note" id="localnote">Je vinkjes worden op dit toestel bewaard. Tip: zet de app op je beginscherm, dan werkt ze ook zonder internet.</p>
+  <div class="install" id="install" hidden>
+    <div class="install-txt"><b>Zet de app op je beginscherm</b><span>Dan opent ze met één tik en werkt ze ook zonder internet.</span></div>
+    <button type="button" id="installbtn" class="installbtn">Installeer</button>
+    <ol class="ios" id="ios" hidden>
+      <li>Tik onderaan in Safari op <b>Deel</b> <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v11M6 6l4-4 4 4M4 10v7h12v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+      <li>Kies <b>Zet op beginscherm</b></li>
+      <li>Tik op <b>Voeg toe</b></li>
+    </ol>
+    <button type="button" class="later" id="later">Later</button>
+  </div>
+  <p class="note" id="localnote">Je vinkjes worden op dit toestel bewaard.</p>
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -437,6 +454,33 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   loadLocal(); render();
   sync.textContent = 'Bewaard op dit toestel';
   window.addEventListener('storage', e => { if (e.key === LKEY) { loadLocal(); render(); } });
+
+  // ---------- installeren ----------
+  const inst = document.getElementById('install'), ibtn = document.getElementById('installbtn'), ios = document.getElementById('ios');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('feestdag-install-later') === '1'; } catch (e) {}
+  let deferred = null;
+  if (!standalone && !dismissed && isIOS) inst.hidden = false;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferred = e;
+    if (!standalone && !dismissed) inst.hidden = false;
+  });
+  ibtn.addEventListener('click', async () => {
+    if (deferred) {
+      deferred.prompt();
+      try { const r = await deferred.userChoice; if (r.outcome === 'accepted') inst.hidden = true; } catch (e) {}
+      deferred = null;
+    } else {
+      ios.hidden = !ios.hidden;
+    }
+  });
+  window.addEventListener('appinstalled', () => { inst.hidden = true; toast('App geïnstalleerd'); });
+  document.getElementById('later').addEventListener('click', () => {
+    inst.hidden = true;
+    try { localStorage.setItem('feestdag-install-later', '1'); } catch (e) {}
+  });
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });

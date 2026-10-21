@@ -17,7 +17,7 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 
 - Tik op een regel om hem af te vinken. Tik nog eens om het vinkje weg te halen.
 - De vinkjes worden **op je eigen toestel** bewaard. Iedereen houdt zijn eigen lijst bij.
-- Zet de app op je beginscherm, dan werkt ze ook zonder internet:
+- Zet de app op je beginscherm (in de app staat een knop **Installeer**), dan werkt ze ook zonder internet:
   - **iPhone (Safari):** deel-knop → *Zet op beginscherm*
   - **Android (Chrome):** menu ⋮ → *Toevoegen aan startscherm* of *App installeren*
 
