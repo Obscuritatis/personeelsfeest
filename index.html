@@ -129,6 +129,18 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 .install .ios { grid-column: 1 / -1; margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14.5px; }
 .install .ios svg { width: 17px; height: 17px; vertical-align: -3px; }
 .install .later { grid-column: 1 / -1; justify-self: start; font: 500 13px var(--body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.list li.own { display: flex; align-items: stretch; }
+.list li.own .item { flex: 1; min-width: 0; }
+.del { flex: none; min-width: 48px; border: 0; border-left: 1px solid var(--line); background: none; color: var(--muted); font: 500 22px var(--body); cursor: pointer; padding: 0 12px; }
+.del.armed { background: var(--red); color: #fff; font-size: 13px; font-weight: 600; }
+.del:focus-visible { outline: 3px solid var(--pipe); outline-offset: -3px; }
+.addrow { padding: 8px 10px 8px 14px; background: var(--bg); }
+.add { display: flex; gap: 8px; align-items: center; }
+.add input { flex: 1; min-width: 0; font: 16px var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; }
+.add input::placeholder { color: var(--muted); }
+.add input:focus-visible { outline: 2px solid var(--pipe); outline-offset: 1px; border-color: var(--pipe); }
+.add button { flex: none; font: 700 15px var(--display); letter-spacing: .04em; text-transform: uppercase; background: var(--steel); color: var(--on-steel); border: 0; border-radius: 6px; padding: 10px 12px; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .reset { justify-self: start; font: 500 14px var(--body); color: var(--red); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
 .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
 .confirm button { font: 600 14px var(--body); border-radius: 6px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
@@ -271,19 +283,21 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const ALL = [];
 
-  function itemHTML([id, t, d, who, crit]) {
-    ALL.push(id);
-    return `<li><button type="button" class="item${crit ? ' crit' : ''}" id="i-${id}" data-id="${id}" aria-pressed="false">
+  function itemHTML([id, t, d, who, crit], custom) {
+    if (!custom) ALL.push(id);
+    return `<li${custom ? ' class="own"' : ''}><button type="button" class="item${crit ? ' crit' : ''}" id="i-${id}" data-id="${id}" aria-pressed="false">
       <span class="box" style="color:var(--steel)">${CHECK}</span>
       <span class="txt"><span class="t">${esc(t)}${who ? `<span class="tag">${esc(who)}</span>` : ''}</span>${d ? `<span class="d">${esc(d)}</span>` : ''}<span class="by" hidden></span></span>
-    </button></li>`;
+    </button>${custom ? `<button type="button" class="del" data-del="${id}" aria-label="Verwijder ${esc(t)}">×</button>` : ''}</li>`;
   }
 
   function sectionHTML(s) {
     let h = `<section id="${s.id}" aria-labelledby="h-${s.id}"><div class="sh"><h2 id="h-${s.id}">${esc(s.title)}</h2><span class="n" data-n="${s.id}"></span></div>`;
-    s.groups.forEach(g => {
+    s.groups.forEach((g, gi) => {
+      const key = s.id + '-' + gi;
       if (g.title) h += `<h3>${esc(g.title)}</h3>`;
-      h += `<ul class="list">${g.items.map(itemHTML).join('')}<li class="empty">Alles afgevinkt.</li></ul>`;
+      h += `<ul class="list" data-g="${key}">${g.items.map(x => itemHTML(x)).join('')}<li class="empty">Alles afgevinkt.</li>
+        <li class="addrow"><form class="add" data-add="${key}"><label class="sr" for="add-${key}">Toevoegen aan ${esc(g.title || s.title)}</label><input id="add-${key}" type="text" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="+ Iets toevoegen"><button type="submit" aria-label="Toevoegen">Voeg toe</button></form></li></ul>`;
     });
     return h + '</section>';
   }
@@ -339,11 +353,29 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   let db = null, user = null, me = null, names = {};
   const LKEY = 'feestdag-vinkjes-v1';
 
+  // eigen toegevoegde items, per lijst: { "mee-0": [{id, t}], ... }
+  const CKEY = 'feestdag-eigen-v1';
+  let custom = {};
+  function loadCustom() { try { custom = JSON.parse(localStorage.getItem(CKEY) || '{}') || {}; } catch (e) { custom = {}; } }
+  function saveCustom() { try { localStorage.setItem(CKEY, JSON.stringify(custom)); } catch (e) {} }
+  const customIds = key => (custom[key] || []).map(x => x.id);
+  const sectionKeys = sec => sec.groups.map((g, gi) => sec.id + '-' + gi);
+  function drawCustom() {
+    document.querySelectorAll('.list[data-g]').forEach(ul => {
+      ul.querySelectorAll('li.own').forEach(li => li.remove());
+      const items = custom[ul.dataset.g] || [];
+      const anchor = ul.querySelector('li.empty');
+      anchor.insertAdjacentHTML('beforebegin', items.map(x => itemHTML([x.id, x.t, '', '', false], true)).join(''));
+    });
+  }
+
   function render() {
     let done = 0;
-    ALL.forEach(id => {
+    const every = ALL.concat(Object.keys(custom).flatMap(customIds));
+    every.forEach(id => {
       const el = document.getElementById('i-' + id);
       const s = state[id];
+      if (!el) return;
       el.setAttribute('aria-pressed', s ? 'true' : 'false');
       const by = el.querySelector('.by');
       if (s && (s.by || s.at)) {
@@ -354,10 +386,10 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
       } else by.hidden = true;
       if (s) done++;
     });
-    document.getElementById('count').textContent = `${done} / ${ALL.length}`;
-    document.getElementById('meter').style.width = (ALL.length ? done / ALL.length * 100 : 0) + '%';
+    document.getElementById('count').textContent = `${done} / ${every.length}`;
+    document.getElementById('meter').style.width = (every.length ? done / every.length * 100 : 0) + '%';
     SECTIONS.forEach(sec => {
-      const ids = sec.groups.flatMap(g => g.items.map(x => x[0]));
+      const ids = sec.groups.flatMap(g => g.items.map(x => x[0])).concat(sectionKeys(sec).flatMap(customIds));
       const n = ids.filter(id => state[id]).length;
       const lab = document.querySelector(`[data-n="${sec.id}"]`);
       lab.textContent = `${n} / ${ids.length}`;
@@ -404,7 +436,44 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     } finally { busy.delete(id); }
   }
 
+  main.addEventListener('submit', e => {
+    const f = e.target.closest('form.add');
+    if (!f) return;
+    e.preventDefault();
+    const inp = f.querySelector('input');
+    const t = inp.value.trim().replace(/\s+/g, ' ');
+    if (!t) { inp.focus(); return; }
+    const key = f.dataset.add;
+    const id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    (custom[key] = custom[key] || []).push({ id, t });
+    saveCustom(); drawCustom(); render();
+    inp.value = '';
+    inp.focus();
+    toast('Toegevoegd');
+  });
+
+  let armed = null, armTimer;
+  function removeCustom(id) {
+    Object.keys(custom).forEach(k => {
+      custom[k] = custom[k].filter(x => x.id !== id);
+      if (!custom[k].length) delete custom[k];
+    });
+    delete state[id];
+    saveCustom(); saveLocal(); drawCustom(); render();
+    toast('Verwijderd');
+  }
+
   main.addEventListener('click', e => {
+    const del = e.target.closest('.del');
+    if (del) {
+      const id = del.dataset.del;
+      if (armed === id) { armed = null; clearTimeout(armTimer); removeCustom(id); return; }
+      document.querySelectorAll('.del.armed').forEach(x => { x.classList.remove('armed'); x.textContent = '×'; });
+      armed = id; del.classList.add('armed'); del.textContent = 'Verwijder?';
+      clearTimeout(armTimer);
+      armTimer = setTimeout(() => { armed = null; del.classList.remove('armed'); del.textContent = '×'; }, 3500);
+      return;
+    }
     const b = e.target.closest('.item');
     if (b) toggle(b.dataset.id);
     const c = e.target.closest('.copy');
@@ -451,9 +520,9 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 
   // ---------- opslaan op dit toestel ----------
   const sync = document.getElementById('sync');
-  loadLocal(); render();
+  loadLocal(); loadCustom(); drawCustom(); render();
   sync.textContent = 'Bewaard op dit toestel';
-  window.addEventListener('storage', e => { if (e.key === LKEY) { loadLocal(); render(); } });
+  window.addEventListener('storage', e => { if (e.key === LKEY) { loadLocal(); render(); } if (e.key === CKEY) { loadCustom(); drawCustom(); render(); } });
 
   // ---------- installeren ----------
   const inst = document.getElementById('install'), ibtn = document.getElementById('installbtn'), ios = document.getElementById('ios');

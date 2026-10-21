@@ -16,7 +16,8 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 ## Gebruik
 
 - Tik op een regel om hem af te vinken. Tik nog eens om het vinkje weg te halen.
-- De vinkjes worden **op je eigen toestel** bewaard. Iedereen houdt zijn eigen lijst bij.
+- Onderaan elke lijst kun je zelf iets **toevoegen**. Een eigen item verwijder je met **×** (tik twee keer om te bevestigen).
+- De vinkjes en eigen items worden **op je eigen toestel** bewaard. Iedereen houdt zijn eigen lijst bij.
 - Zet de app op je beginscherm (in de app staat een knop **Installeer**), dan werkt ze ook zonder internet:
   - **iPhone (Safari):** deel-knop → *Zet op beginscherm*
   - **Android (Chrome):** menu ⋮ → *Toevoegen aan startscherm* of *App installeren*
@@ -24,6 +25,6 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. `personeelsfeest-v2`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v3` naar `v4`), zodat toestellen de nieuwe versie ophalen.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).
