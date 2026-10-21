@@ -115,6 +115,18 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 .crewfoot i { display: inline-block; width: 16px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
 
 /* contact */
+.contacts { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.contacts li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 11px 14px; }
+.contacts li + li { border-top: 1px solid var(--line); }
+.ci { display: grid; gap: 1px; min-width: 0; }
+.ci .k { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ci .nm { font-weight: 600; }
+.ci .num { font-size: 14.5px; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; overflow-wrap: anywhere; }
+.ca { flex: none; display: flex; gap: 6px; }
+.call { font: 700 15px var(--display); letter-spacing: .05em; text-transform: uppercase; text-decoration: none; background: var(--steel); color: var(--on-steel); border-radius: 6px; padding: 9px 14px; }
+.call.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.call:focus-visible { outline: 3px solid var(--pipe); outline-offset: 2px; }
+.none { color: var(--muted); font-size: 13px; font-weight: 400; }
 .contact { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; font-size: 15px; }
 .contact .k { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .contact .v { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
@@ -279,6 +291,21 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     ]}]}
   ];
 
+  // contact: [rol, voornaam, telefoon, e-mail]
+  const CONTACTS = [
+    ['Verantwoordelijke Hangaar 44', 'Jonas', '0479 97 32 61'],
+    ['Licht & geluid', 'Dimitri', '0475 75 19 31'],
+    ['Fotobooth', 'Lorenzo', '0496 96 43 98'],
+    ["Bandje 'Elke & De Eddy's'", '', '0494 57 28 93'],
+    ['DJ', 'Diederik', ''],
+    ['Bemanning toog', 'voetbal', ''],
+    ['Foodtrucks', 'Chris', '0487 99 55 99'],
+    ['Bloemenhal', 'Thomas', '0496 98 96 98'],
+    ['Dranken Minnart', 'Peter', '016 77 05 33', 'info@drankenminnart.be'],
+    ["'t Hoeveke Wever (wijn en cava)", 'Julie', ''],
+    ['Fotograaf', 'Rosie', '']
+  ];
+
   const CREW = [
     ['Johan', [[8, 26]], true],
     ['Liesbeth', [[8, 26]], true],
@@ -322,11 +349,10 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     if (s.id === 'opbouw') html += crewHTML();
   });
   html += `<section id="contact" aria-labelledby="h-contact"><div class="sh"><h2 id="h-contact">Contact</h2></div>
-    <div class="contact">
-      <div class="k">Brouwer · Peter</div>
-      <div class="v"><span>016/77 05 33</span><button class="copy" type="button" data-copy="016/77 05 33">Kopieer</button></div>
-      <div class="v"><span>info@drankenminnart.be</span><button class="copy" type="button" data-copy="info@drankenminnart.be">Kopieer</button></div>
-    </div></section>
+    <ul class="contacts">${CONTACTS.map(([rol, naam, tel, mail]) => `<li>
+      <div class="ci"><span class="k">${esc(rol)}</span>${naam ? `<span class="nm">${esc(naam)}</span>` : ''}${tel ? `<span class="num">${esc(tel)}</span>` : ''}${mail ? `<span class="num">${esc(mail)}</span>` : ''}</div>
+      <div class="ca">${tel ? `<a class="call" href="tel:${tel.replace(/[^0-9+]/g, '')}" aria-label="Bel ${esc(naam || rol)}">Bel</a>` : ''}${mail ? `<a class="call ghost" href="mailto:${esc(mail)}" aria-label="Mail ${esc(naam || rol)}">Mail</a>` : ''}${!tel && !mail ? '<span class="none">geen nummer</span>' : ''}</div>
+    </li>`).join('')}</ul></section>
     <div id="resetwrap"><button class="reset" type="button" id="reset">Alle vinkjes wissen</button></div>`;
   main.insertAdjacentHTML('beforeend', html);
 
