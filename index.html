@@ -115,12 +115,19 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
 .crewfoot i { display: inline-block; width: 16px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
 
 /* contact */
-.cdet > summary { list-style: none; cursor: pointer; }
-.cdet > summary::-webkit-details-marker { display: none; }
-.cdet > summary h2::after { content: ""; display: inline-block; width: 9px; height: 9px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-left: 10px; vertical-align: 5px; transition: transform .15s ease; }
-.cdet:not([open]) > summary h2::after { transform: rotate(-45deg); vertical-align: 2px; }
-.cdet > summary:focus-visible { outline: 3px solid var(--pipe); outline-offset: 3px; }
-.cdet[open] > summary { margin-bottom: 8px; }
+details.fold > summary { list-style: none; cursor: pointer; -webkit-user-select: none; user-select: none; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary h2::after, details.fold > summary h3::after { content: ""; display: inline-block; width: 8px; height: 8px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-left: 10px; vertical-align: 4px; transition: transform .15s ease; }
+details.fold > summary h3::after { width: 6px; height: 6px; border-width: 2px; vertical-align: 3px; }
+details.fold:not([open]) > summary h2::after, details.fold:not([open]) > summary h3::after { transform: rotate(-45deg); vertical-align: 1px; }
+details.fold > summary:focus-visible { outline: 3px solid var(--pipe); outline-offset: 3px; }
+details.fold[open] > summary.sh { margin-bottom: 8px; }
+.fbody { display: grid; gap: 8px; }
+.gsum { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 6px 0 2px; }
+.gsum h3 { margin: 0; }
+.gn { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gn.full { color: var(--green); }
+details.sub[open] > .gsum { margin-bottom: 6px; }
 .chips a.cchip { background: var(--pipe); color: var(--steel); border-color: var(--pipe); }
 .contacts { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .contacts li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 11px 14px; }
@@ -340,18 +347,19 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   }
 
   function sectionHTML(s) {
-    let h = `<section id="${s.id}" aria-labelledby="h-${s.id}"><div class="sh"><h2 id="h-${s.id}">${esc(s.title)}</h2><span class="n" data-n="${s.id}"></span></div>`;
+    let h = `<section id="${s.id}" aria-labelledby="h-${s.id}"><details class="fold" data-fold="${s.id}" open><summary class="sh"><h2 id="h-${s.id}">${esc(s.title)}</h2><span class="n" data-n="${s.id}"></span></summary><div class="fbody">`;
     s.groups.forEach((g, gi) => {
       const key = s.id + '-' + gi;
-      if (g.title) h += `<h3>${esc(g.title)}</h3>`;
+      if (g.title) h += `<details class="fold sub" data-fold="${key}" open><summary class="gsum"><h3>${esc(g.title)}</h3><span class="gn" data-gn="${key}"></span></summary>`;
       h += `<ul class="list" data-g="${key}">${g.items.map(x => itemHTML(x)).join('')}<li class="empty">Alles afgevinkt.</li>
         <li class="addrow"><form class="add" data-add="${key}"><label class="sr" for="add-${key}">Toevoegen aan ${esc(g.title || s.title)}</label><input id="add-${key}" type="text" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="+ Iets toevoegen"><button type="submit" aria-label="Toevoegen">Voeg toe</button></form></li></ul>`;
+      if (g.title) h += '</details>';
     });
-    return h + '</section>';
+    return h + '</div></details></section>';
   }
 
   let html = '';
-  const contactHTML = `<section id="contact" aria-labelledby="h-contact"><details class="cdet" id="cdet" open><summary class="sh"><h2 id="h-contact">Contact</h2><span class="n">${CONTACTS.length} · tik om te ${'<span class="op">'}sluiten</span></span></summary>
+  const contactHTML = `<section id="contact" aria-labelledby="h-contact"><details class="fold" data-fold="contact" open><summary class="sh"><h2 id="h-contact">Contact</h2><span class="n">${CONTACTS.length}</span></summary>
     <ul class="contacts">${CONTACTS.map(([rol, naam, tel, mail]) => `<li>
       <div class="ci"><span class="k">${esc(rol)}</span>${naam ? `<span class="nm">${esc(naam)}</span>` : ''}${tel ? `<span class="num">${esc(tel)}</span>` : ''}${mail ? `<span class="num">${esc(mail)}</span>` : ''}</div>
       <div class="ca">${tel ? `<a class="call" href="tel:${tel.replace(/[^0-9+]/g, '')}" aria-label="Bel ${esc(naam || rol)}">Bel</a>` : ''}${mail ? `<a class="call ghost" href="mailto:${esc(mail)}" aria-label="Mail ${esc(naam || rol)}">Mail</a>` : ''}${!tel && !mail ? '<span class="none">geen nummer</span>' : ''}</div>
@@ -371,13 +379,13 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     const S = 8, E = 26, span = E - S;
     const pct = h => ((h - S) / span * 100).toFixed(2) + '%';
     const fmt = h => String(h % 24).padStart(2, '0') + 'h00';
-    let h = `<section id="helpers" aria-labelledby="h-helpers"><div class="sh"><h2 id="h-helpers">Helpers</h2><span class="n" id="nowtxt"></span></div><div class="crew">
+    let h = `<section id="helpers" aria-labelledby="h-helpers"><details class="fold" data-fold="helpers" open><summary class="sh"><h2 id="h-helpers">Helpers</h2><span class="n" id="nowtxt"></span></summary><div class="crew">
       <div class="axis"><span></span><div class="ticks"><span style="left:0">08</span><span style="left:${pct(12)}">12</span><span style="left:${pct(16)}">16</span><span style="left:${pct(20)}">20</span><span style="left:100%">02</span></div></div>`;
     CREW.forEach(([n, segs, op], i) => {
       const times = segs.length ? segs.map(([a, b]) => fmt(a) + '–' + fmt(b)).join(', ') + (op ? ' + opruim' : '') : 'uren nog niet bekend';
       h += `<div class="lane" data-lane="${i}"><span class="who">${esc(n)}<small>${times}</small></span><div class="track">${segs.map(([a, b]) => `<i class="seg" style="left:${pct(a)};width:${((b - a) / span * 100).toFixed(2)}%"></i>`).join('')}${op ? '<i class="op"></i>' : ''}<i class="nowline" hidden></i></div></div>`;
     });
-    h += `<div class="crewfoot"><span><i style="background:var(--pipe)"></i>aanwezig</span><span><i style="background:repeating-linear-gradient(45deg,var(--ink) 0 2px,transparent 2px 5px);opacity:.55"></i>opruim na 02h00</span><span><i style="background:var(--red);width:3px"></i>nu</span></div></div></section>`;
+    h += `<div class="crewfoot"><span><i style="background:var(--pipe)"></i>aanwezig</span><span><i style="background:repeating-linear-gradient(45deg,var(--ink) 0 2px,transparent 2px 5px);opacity:.55"></i>opruim na 02h00</span><span><i style="background:var(--red);width:3px"></i>nu</span></div></div></details></section>`;
     return h;
   }
 
@@ -397,12 +405,37 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
   }
   drawNow(); setInterval(drawNow, 60000);
 
-  const cdet = document.getElementById('cdet');
-  const setSum = () => { cdet.querySelector('.op').textContent = cdet.open ? 'sluiten' : 'openen'; };
-  try { if (localStorage.getItem('feestdag-contact-dicht') === '1') cdet.open = false; } catch (e) {}
-  setSum();
-  cdet.addEventListener('toggle', () => { setSum(); try { localStorage.setItem('feestdag-contact-dicht', cdet.open ? '0' : '1'); } catch (e) {} });
-  document.querySelector('.cchip').addEventListener('click', () => { cdet.open = true; });
+  // ---------- inklappen ----------
+  // onthoudt per lijst of ze dicht staat; een lijst die je net afwerkt klapt vanzelf dicht
+  const FKEY = 'feestdag-dicht-v1';
+  let closed = {};
+  try { closed = JSON.parse(localStorage.getItem(FKEY) || '{}') || {}; } catch (e) { closed = {}; }
+  try { if (localStorage.getItem('feestdag-contact-dicht') === '1') closed.contact = true; } catch (e) {}
+  const folds = [...document.querySelectorAll('details.fold')];
+  folds.forEach(d => {
+    if (closed[d.dataset.fold]) d.open = false;
+    d.addEventListener('toggle', () => {
+      if (d.open) delete closed[d.dataset.fold]; else closed[d.dataset.fold] = true;
+      try { localStorage.setItem(FKEY, JSON.stringify(closed)); } catch (e) {}
+    });
+  });
+  const openFold = k => { const d = document.querySelector(`details.fold[data-fold="${k}"]`); if (d) d.open = true; };
+  chips.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (a) openFold(a.getAttribute('href').slice(1)); });
+  // een lijst die volledig afgevinkt wordt, klapt na een ogenblik dicht
+  function autoClose(id) {
+    const btn = document.getElementById('i-' + id);
+    if (!btn) return;
+    const chain = [];
+    let el = btn.closest('details.fold');
+    while (el) { chain.push(el); el = el.parentElement.closest('details.fold'); }
+    setTimeout(() => {
+      for (const d of chain) {
+        const open = d.querySelectorAll('.item[aria-pressed="false"]').length;
+        if (open === 0 && d.open) d.open = false;
+        else break;
+      }
+    }, 700);
+  }
 
   // ---------- staat ----------
   let state = {};          // id -> {by, at}
@@ -476,6 +509,13 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
       lab.classList.toggle('full', n === ids.length);
       document.querySelector(`[data-c="${sec.id}"]`).textContent = `${n}/${ids.length}`;
       document.querySelector(`[data-chip="${sec.id}"]`).classList.toggle('done', n === ids.length);
+      sec.groups.forEach((g, gi) => {
+        const key = sec.id + '-' + gi, gl = document.querySelector(`[data-gn="${key}"]`);
+        if (!gl) return;
+        const gids = g.items.map(x => x[0]).concat(customIds(key)), gn = gids.filter(id => state[id]).length;
+        gl.textContent = gn === gids.length ? '✓ klaar' : `${gn} / ${gids.length}`;
+        gl.classList.toggle('full', gn === gids.length);
+      });
     });
   }
 
@@ -503,6 +543,7 @@ body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: bl
     const was = state[id];
     if (was) delete state[id]; else state[id] = { by: me || '', at: new Date().toISOString() };
     render();
+    if (!was) autoClose(id);
     if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
     if (!db) { saveLocal(); return; }
     busy.add(id);

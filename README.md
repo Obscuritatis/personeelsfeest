@@ -11,11 +11,12 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 - **Helpers**: wie is er wanneer, met een lijn voor "nu"
 - **Afsluiten**: frigo, lege flesjes, drankformulier, deur op slot, sleutel in het kastje
 - **Vooraf geregeld?**: laatste controle van de takenlijst
-- **Contact**: brouwer
+- **Contact**: alle contactpersonen met belknop (bovenaan, ook via de gele knop in de balk)
 
 ## Gebruik
 
 - Tik op een regel om hem af te vinken. Tik nog eens om het vinkje weg te halen.
+- Tik op de titel van een lijst om ze in of uit te klappen. Een lijst die je helemaal afvinkt, klapt vanzelf dicht. De app onthoudt welke lijsten dicht staan.
 - Onderaan elke lijst kun je zelf iets **toevoegen**. Een eigen item verwijder je met **×** (tik twee keer om te bevestigen).
 - De vinkjes en eigen items worden **op je eigen toestel** bewaard. Iedereen houdt zijn eigen lijst bij.
 - Zet de app op je beginscherm (in de app staat een knop **Installeer**), dan werkt ze ook zonder internet:
@@ -25,6 +26,6 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v9` naar `v10`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v10` naar `v11`), zodat toestellen de nieuwe versie ophalen.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).
