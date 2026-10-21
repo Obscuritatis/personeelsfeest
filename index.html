@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feestdag checklist</title>
+<meta name="theme-color" content="#1e2023">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Personeelsfeest">
+<meta name="description" content="Afvinklijst voor de dag van het personeelsfeest: mee te nemen, opbouw, helpers en afsluiten.">
+<style>
+@font-face { font-family: "Barlow Condensed"; font-weight: 600; font-display: swap; src: url("fonts/BarlowCondensed-SemiBold.ttf") format("truetype"); }
+@font-face { font-family: "Barlow Condensed"; font-weight: 700; font-display: swap; src: url("fonts/BarlowCondensed-Bold.ttf") format("truetype"); }
+@font-face { font-family: "Barlow"; font-weight: 400; font-display: swap; src: url("fonts/Barlow-Regular.ttf") format("truetype"); }
+@font-face { font-family: "Barlow"; font-weight: 500 600; font-display: swap; src: url("fonts/Barlow-Medium.ttf") format("truetype"); }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+/* Layout: één kolom voor de duim; zwarte balk met voortgang bovenaan, secties als rijen om aan te tikken. Zelfde wereld als de plattegrond: beton, zwart staal, gele leiding. */
+:root {
+  --bg: #f1f0ec;
+  --card: #ffffff;
+  --ink: #1e2023;
+  --muted: #6d6c66;
+  --line: #dcdbd5;
+  --steel: #1e2023;
+  --on-steel: #f1f0ec;
+  --pipe: #d9a90f;
+  --pipe-soft: #f6ebc4;
+  --red: #c9372a;
+  --green: #2c7d45;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151618; --card: #1f2023; --ink: #ecebe6; --muted: #9a9993; --line: #33353a;
+  --steel: #0c0d0e; --on-steel: #ecebe6; --pipe: #e8bb2a; --pipe-soft: #3a3218; --red: #ef6a5a; --green: #5cbc7a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151618; --card: #1f2023; --ink: #ecebe6; --muted: #9a9993; --line: #33353a;
+  --steel: #0c0d0e; --on-steel: #ecebe6; --pipe: #e8bb2a; --pipe-soft: #3a3218; --red: #ef6a5a; --green: #5cbc7a; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; -webkit-tap-highlight-color: transparent; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--steel); }
+.gut { max-width: 600px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--steel); color: var(--on-steel); }
+.top .gut { padding-block: 12px 10px; display: grid; gap: 8px; }
+.row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 24px; text-transform: uppercase; letter-spacing: .02em; line-height: 1; }
+h1 span { color: var(--pipe); }
+.count { font-family: var(--display); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; background: rgba(255,255,255,.14); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--pipe); transition: width .3s ease; }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chips a { flex: none; font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .03em; text-transform: uppercase; color: var(--on-steel); text-decoration: none; padding: 5px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,.22); white-space: nowrap; }
+.chips a b { color: var(--pipe); font-weight: 600; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.chips a.done { border-color: var(--pipe); }
+
+main { padding-block: 14px 40px; display: grid; gap: 22px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; font-size: 14px; color: var(--muted); }
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ink); font-weight: 500; }
+.switch input { width: 18px; height: 18px; accent-color: var(--pipe); }
+.note { margin: 0; font-size: 13.5px; color: var(--muted); }
+.note.warn { color: var(--ink); background: var(--pipe-soft); border-radius: 6px; padding: 8px 10px; }
+
+section { display: grid; gap: 8px; scroll-margin-top: 130px; }
+.sh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 3px solid var(--ink); padding-bottom: 4px; }
+h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; }
+.sh .n { font-family: var(--display); font-weight: 600; font-size: 16px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sh .n.full { color: var(--green); }
+h3 { margin: 8px 0 0; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+.list { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.list li + li { border-top: 1px solid var(--line); }
+.item { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0; color: inherit; font: inherit; padding: 13px 14px; cursor: pointer; min-height: 52px; }
+.item:focus-visible { outline: 3px solid var(--pipe); outline-offset: -3px; }
+.box { flex: none; width: 26px; height: 26px; border: 2px solid var(--ink); border-radius: 5px; display: grid; place-content: center; margin-top: -1px; transition: background .15s ease; }
+.box svg { width: 16px; height: 16px; opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .15s ease; }
+.txt { display: grid; gap: 2px; min-width: 0; }
+.t { font-weight: 500; line-height: 1.3; }
+.d { font-size: 13.5px; color: var(--muted); line-height: 1.35; }
+.by { font-size: 12.5px; color: var(--green); font-weight: 600; }
+.tag { display: inline-block; font-size: 12px; font-weight: 600; background: var(--pipe-soft); color: var(--ink); border-radius: 3px; padding: 0 5px; margin-left: 4px; white-space: nowrap; }
+.item[aria-pressed="true"] .box { background: var(--pipe); border-color: var(--pipe); }
+.item[aria-pressed="true"] .box svg { opacity: 1; transform: none; }
+.item[aria-pressed="true"] .t { text-decoration: line-through; text-decoration-color: var(--pipe); text-decoration-thickness: 2px; color: var(--muted); }
+.item.crit .t::before { content: "!"; display: inline-grid; place-content: center; width: 17px; height: 17px; border-radius: 50%; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; margin-right: 7px; vertical-align: 1px; }
+body.hide-done li:has(.item[aria-pressed="true"]) { display: none; }
+.empty { display: none; padding: 14px; color: var(--green); font-weight: 600; font-size: 14px; }
+body.hide-done .list:not(:has(.item[aria-pressed="false"])) .empty { display: block; }
+
+/* helpers */
+.crew { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; }
+.axis, .lane { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: center; }
+.axis .ticks { position: relative; height: 14px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.axis .ticks span { position: absolute; transform: translateX(-50%); }
+.axis .ticks span:first-child { transform: none; }
+.axis .ticks span:last-child { transform: translateX(-100%); }
+.lane .who { font-size: 14px; font-weight: 500; line-height: 1.2; min-width: 0; }
+.lane .who small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 14px; background: var(--bg); border-radius: 3px; }
+.track .seg { position: absolute; top: 0; bottom: 0; background: var(--pipe); border-radius: 3px; }
+.track .op { position: absolute; top: 0; bottom: 0; right: 0; width: 10%; background: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 5px); opacity: .55; border-radius: 0 3px 3px 0; }
+.lane.now-in .who { font-weight: 700; }
+.lane.now-in .who::after { content: " · nu"; color: var(--green); font-weight: 600; }
+.nowline { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--red); border-radius: 1px; }
+.crewfoot { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); }
+.crewfoot i { display: inline-block; width: 16px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+
+/* contact */
+.contact { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; font-size: 15px; }
+.contact .k { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.contact .v { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.contact .v span { user-select: all; -webkit-user-select: all; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.copy { font: 600 13px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+.copy:focus-visible { outline: 2px solid var(--pipe); outline-offset: 2px; }
+
+.reset { justify-self: start; font: 500 14px var(--body); color: var(--red); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.confirm button { font: 600 14px var(--body); border-radius: 6px; padding: 8px 12px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.confirm .yes { background: var(--red); border-color: var(--red); color: #fff; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--steel); color: var(--on-steel); font-size: 14px; padding: 9px 14px; border-radius: 6px; transition: opacity .2s ease, transform .2s ease; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="gut">
+    <div class="row1">
+      <h1>Personeels<span>feest</span></h1>
+      <span class="count" id="count">0 / 0</span>
+    </div>
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <nav class="chips" id="chips" aria-label="Secties"></nav>
+  </div>
+</div>
+
+<main class="gut" id="main">
+  <div class="bar">
+    <label class="switch"><input type="checkbox" id="hide"> Verberg afgevinkt</label>
+    <span id="sync">Vinkjes laden…</span>
+  </div>
+  <p class="note" id="localnote">Je vinkjes worden op dit toestel bewaard. Tip: zet de app op je beginscherm, dan werkt ze ook zonder internet.</p>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  // ---------- inhoud ----------
+  const SECTIONS = [
+    { id: 'mee', title: 'Mee te nemen', groups: [{ items: [
+      ['m-tape-wit', 'Plakband, gewone witte'],
+      ['m-tape-sterk', 'Plakband, stevige'],
+      ['m-schaar', 'Schaar'],
+      ['m-touw', 'Touw'],
+      ['m-handdoek', 'Keukenhanddoeken'],
+      ['m-opener', 'Aftrekker voor flesjes'],
+      ['m-spons', 'Sponsen'],
+      ['m-afwas', 'Afwasmiddel'],
+      ['m-pen', 'Balpennen', 'Ook voor het drankformulier in de tussenruimte'],
+      ['m-bak', 'Vuilnisbakken'],
+      ['m-zak', 'Vuilniszakken'],
+      ['m-aff-kleed', 'Affiches kleedkamers'],
+      ['m-aff-bar', 'Affiches bar'],
+      ['m-menu', "Tafelmenu's"],
+      ['m-bezem', 'Bezemsteel voor de piñata', '', 'Liesbeth'],
+      ['m-blokjes', 'Blokjes met nummers', '', 'Leenje'],
+      ['m-haribo', 'Zakjes Haribo en confetti', 'Voor in de piñata']
+    ]}]},
+    { id: 'opbouw', title: 'Opbouw', groups: [
+      { title: 'Deel 1 · bar en podium', items: [
+        ['o-bar', 'Bar klaarzetten', 'Drankenlijsten (A3) en affiches aan de bar'],
+        ['o-sta', '16 statafels voor de bar', 'Rasterrij 4 tot 6, versprongen 6 · 5 · 5'],
+        ['o-cocktail', 'Tafel cocktails en mocktails', 'Rechts van de inkom, tegen de muur'],
+        ['o-podium', 'Podium', 'Onderaan deel 1, in het midden tegen de muur'],
+        ['o-pinata', 'Piñata ophangen', 'Gevuld met Haribo en confetti'],
+        ['o-pinata-zone', 'Vrije zone van 3 m rond de piñata afbakenen', 'Eén persoon tegelijk laten slaan', '', true],
+        ['o-licht', 'Verlichting testen', 'Regeling linksboven in deel 1: aan/uit en dimmen']
+      ]},
+      { title: 'Deel 2 · tafels', items: [
+        ['o-tafels', '40 lange tafels schuin opstellen', 'Twee kolommen met middengang, 320 plaatsen'],
+        ['o-doeken', 'Tafeldoeken leggen'],
+        ['o-menus', "Tafelmenu's op de tafels"],
+        ['o-vuilbak', 'Vuilnisbakken plaatsen']
+      ]},
+      { title: 'Deel 3 · foodtrucks', items: [
+        ['o-gordijn', 'Gordijnen tussen deel 2 en 3 sluiten', 'Tussen paal 1–2 en 5–6'],
+        ['o-trucks', 'Foodtrucks 1, 2 en 3 binnen', 'Via de garagepoort, net in deel 3'],
+        ['o-stroom', 'Stroom naar de foodtrucks', 'Aansluiting onderaan deel 2. Kabels afdekken in de looproute', '', true]
+      ]},
+      { title: 'Inkomhal', items: [
+        ['o-loper', 'Rode loper leggen'],
+        ['o-tombola', 'Tombolatafels klaarzetten', 'Tombola van Luc'],
+        ['o-foto', 'Fotobooth klaar', 'In de inham'],
+        ['o-kap', 'Kapstokken vrij'],
+        ['o-kleed', 'Affiches kleedkamers ophangen']
+      ]},
+      { title: 'Frigo en tussenruimte', items: [
+        ['o-frigo', 'Bakken in de frigocel vol'],
+        ['o-keuken', 'Deur naar de keuken vrij', 'Hier mag niets voorgezet worden', '', true]
+      ]}
+    ]},
+    { id: 'afsluiten', title: 'Afsluiten', groups: [{ items: [
+      ['a-frigo', 'Bakken in de frigocel vol', 'Uitgeschonken drank aanvullen met lege flesjes'],
+      ['a-leeg', 'Bakken met lege flesjes vol en gestockeerd', 'Onderaan in de tussenruimte'],
+      ['a-form', 'Drankformulier ingevuld', 'Wat er nog over is. Niet geconsumeerde drank wordt niet gefactureerd', '', true],
+      ['a-keuken', 'Deur naar de keuken vrij'],
+      ['a-afval', 'Vuilniszakken gesloten en weg'],
+      ['a-licht', 'Verlichting uit'],
+      ['a-deur', 'Buitendeur tussenruimte afgesloten', '', '', true],
+      ['a-sleutel', 'Sleutel in het sleutelkastje', 'Naast de doorgang naar de zaal', '', true]
+    ]}]},
+    { id: 'vooraf', title: 'Vooraf geregeld?', groups: [{ items: [
+      ['v-menu', "Tafelmenu's ontworpen en gedrukt"],
+      ['v-barlijst', 'Drankenlijsten bar gedrukt en geplastificeerd'],
+      ['v-bezem', 'Bezemsteel voor de piñata', '', 'Liesbeth'],
+      ['v-drank', 'Drank besteld bij brouwer Minnart', 'Lien geeft de bestelling door'],
+      ['v-desp', 'Desperados en Desperados 0% nagevraagd'],
+      ['v-koffie', 'Koffie geregeld', 'Mogelijk via de zaal zelf'],
+      ['v-doeken', 'Tafeldoeken voorzien'],
+      ['v-tafels', 'Aantal tafels en zitplaatsen vastgelegd'],
+      ['v-haribo', 'Zakjes Haribo besteld'],
+      ['v-confetti', 'Confetti voorzien'],
+      ['v-blokjes', 'Blokjes met nummers', '', 'Leenje'],
+      ['v-sfeer', 'Sfeerverlichting inkomhal nagevraagd', 'Bij licht en geluid']
+    ]}]}
+  ];
+
+  const CREW = [
+    ['Johan', [[8, 26]], true],
+    ['Liesbeth', [[8, 26]], true],
+    ['Lien', [[17, 22]], false],
+    ['Cedric', [[18, 26]], true],
+    ['Stephanie', [[8, 12], [18, 26]], false],
+    ['Vera', [], false],
+    ['Campusservice', [], false],
+    ['Technische dienst', [], false]
+  ];
+
+  // ---------- opbouw van de pagina ----------
+  const main = document.getElementById('main');
+  const chips = document.getElementById('chips');
+  const CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ALL = [];
+
+  function itemHTML([id, t, d, who, crit]) {
+    ALL.push(id);
+    return `<li><button type="button" class="item${crit ? ' crit' : ''}" id="i-${id}" data-id="${id}" aria-pressed="false">
+      <span class="box" style="color:var(--steel)">${CHECK}</span>
+      <span class="txt"><span class="t">${esc(t)}${who ? `<span class="tag">${esc(who)}</span>` : ''}</span>${d ? `<span class="d">${esc(d)}</span>` : ''}<span class="by" hidden></span></span>
+    </button></li>`;
+  }
+
+  function sectionHTML(s) {
+    let h = `<section id="${s.id}" aria-labelledby="h-${s.id}"><div class="sh"><h2 id="h-${s.id}">${esc(s.title)}</h2><span class="n" data-n="${s.id}"></span></div>`;
+    s.groups.forEach(g => {
+      if (g.title) h += `<h3>${esc(g.title)}</h3>`;
+      h += `<ul class="list">${g.items.map(itemHTML).join('')}<li class="empty">Alles afgevinkt.</li></ul>`;
+    });
+    return h + '</section>';
+  }
+
+  let html = '';
+  SECTIONS.forEach((s, i) => {
+    html += sectionHTML(s);
+    if (s.id === 'opbouw') html += crewHTML();
+  });
+  html += `<section id="contact" aria-labelledby="h-contact"><div class="sh"><h2 id="h-contact">Contact</h2></div>
+    <div class="contact">
+      <div class="k">Brouwer · Peter</div>
+      <div class="v"><span>016/77 05 33</span><button class="copy" type="button" data-copy="016/77 05 33">Kopieer</button></div>
+      <div class="v"><span>info@drankenminnart.be</span><button class="copy" type="button" data-copy="info@drankenminnart.be">Kopieer</button></div>
+    </div></section>
+    <div id="resetwrap"><button class="reset" type="button" id="reset">Alle vinkjes wissen</button></div>`;
+  main.insertAdjacentHTML('beforeend', html);
+
+  chips.innerHTML = SECTIONS.map(s => `<a href="#${s.id}" data-chip="${s.id}">${esc(s.title)}<b data-c="${s.id}"></b></a>`).join('') + '<a href="#helpers">Helpers</a>';
+
+  function crewHTML() {
+    const S = 8, E = 26, span = E - S;
+    const pct = h => ((h - S) / span * 100).toFixed(2) + '%';
+    const fmt = h => String(h % 24).padStart(2, '0') + 'h00';
+    let h = `<section id="helpers" aria-labelledby="h-helpers"><div class="sh"><h2 id="h-helpers">Helpers</h2><span class="n" id="nowtxt"></span></div><div class="crew">
+      <div class="axis"><span></span><div class="ticks"><span style="left:0">08</span><span style="left:${pct(12)}">12</span><span style="left:${pct(16)}">16</span><span style="left:${pct(20)}">20</span><span style="left:100%">02</span></div></div>`;
+    CREW.forEach(([n, segs, op], i) => {
+      const times = segs.length ? segs.map(([a, b]) => fmt(a) + '–' + fmt(b)).join(', ') + (op ? ' + opruim' : '') : 'uren nog niet bekend';
+      h += `<div class="lane" data-lane="${i}"><span class="who">${esc(n)}<small>${times}</small></span><div class="track">${segs.map(([a, b]) => `<i class="seg" style="left:${pct(a)};width:${((b - a) / span * 100).toFixed(2)}%"></i>`).join('')}${op ? '<i class="op"></i>' : ''}<i class="nowline" hidden></i></div></div>`;
+    });
+    h += `<div class="crewfoot"><span><i style="background:var(--pipe)"></i>aanwezig</span><span><i style="background:repeating-linear-gradient(45deg,var(--ink) 0 2px,transparent 2px 5px);opacity:.55"></i>opruim na 02h00</span><span><i style="background:var(--red);width:3px"></i>nu</span></div></div></section>`;
+    return h;
+  }
+
+  function drawNow() {
+    const d = new Date();
+    let h = d.getHours() + d.getMinutes() / 60;
+    if (h < 8) h += 24;
+    const inside = h >= 8 && h <= 26;
+    document.querySelectorAll('.nowline').forEach(el => { el.hidden = !inside; el.style.left = ((h - 8) / 18 * 100) + '%'; });
+    let present = 0;
+    CREW.forEach(([, segs], i) => {
+      const on = inside && segs.some(([a, b]) => h >= a && h < b);
+      document.querySelector(`[data-lane="${i}"]`).classList.toggle('now-in', on);
+      if (on) present++;
+    });
+    document.getElementById('nowtxt').textContent = inside ? `${present} nu aanwezig` : '';
+  }
+  drawNow(); setInterval(drawNow, 60000);
+
+  // ---------- staat ----------
+  let state = {};          // id -> {by, at}
+  let db = null, user = null, me = null, names = {};
+  const LKEY = 'feestdag-vinkjes-v1';
+
+  function render() {
+    let done = 0;
+    ALL.forEach(id => {
+      const el = document.getElementById('i-' + id);
+      const s = state[id];
+      el.setAttribute('aria-pressed', s ? 'true' : 'false');
+      const by = el.querySelector('.by');
+      if (s && (s.by || s.at)) {
+        const who = '';
+        const t = s.at ? new Date(s.at).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) : '';
+        by.textContent = '✓ ' + [who, t].filter(Boolean).join(' · ');
+        by.hidden = false;
+      } else by.hidden = true;
+      if (s) done++;
+    });
+    document.getElementById('count').textContent = `${done} / ${ALL.length}`;
+    document.getElementById('meter').style.width = (ALL.length ? done / ALL.length * 100 : 0) + '%';
+    SECTIONS.forEach(sec => {
+      const ids = sec.groups.flatMap(g => g.items.map(x => x[0]));
+      const n = ids.filter(id => state[id]).length;
+      const lab = document.querySelector(`[data-n="${sec.id}"]`);
+      lab.textContent = `${n} / ${ids.length}`;
+      lab.classList.toggle('full', n === ids.length);
+      document.querySelector(`[data-c="${sec.id}"]`).textContent = `${n}/${ids.length}`;
+      document.querySelector(`[data-chip="${sec.id}"]`).classList.toggle('done', n === ids.length);
+    });
+  }
+
+  async function resolveNames() {
+    if (!user) return;
+    const ids = [...new Set(Object.values(state).map(s => s.by).filter(Boolean))].filter(id => !(id in names));
+    if (!ids.length) return;
+    try {
+      const ps = await user.profiles(ids);
+      ids.forEach(id => { names[id] = (ps[id] && ps[id].name) ? ps[id].name.split(' ')[0] : ''; });
+      render();
+    } catch (e) {}
+  }
+
+  function loadLocal() { try { state = JSON.parse(localStorage.getItem(LKEY) || '{}') || {}; } catch (e) { state = {}; } }
+  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(state)); } catch (e) {} }
+
+  const toastEl = document.getElementById('toast');
+  let tt;
+  function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('on'), 2600); }
+
+  const busy = new Set();
+  async function toggle(id) {
+    if (busy.has(id)) return;
+    const was = state[id];
+    if (was) delete state[id]; else state[id] = { by: me || '', at: new Date().toISOString() };
+    render();
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+    if (!db) { saveLocal(); return; }
+    busy.add(id);
+    try {
+      const ref = db.collection('vinkjes').doc(id);
+      if (was) await ref.delete(); else await ref.set({ by: me || '', at: state[id].at });
+    } catch (e) {
+      if (was) state[id] = was; else delete state[id];
+      render();
+      toast('Niet opgeslagen. Je hebt misschien geen schrijfrechten op deze app.');
+    } finally { busy.delete(id); }
+  }
+
+  main.addEventListener('click', e => {
+    const b = e.target.closest('.item');
+    if (b) toggle(b.dataset.id);
+    const c = e.target.closest('.copy');
+    if (c) {
+      const v = c.dataset.copy;
+      try {
+        navigator.clipboard.writeText(v).then(() => toast('Gekopieerd'), () => selectNear(c));
+      } catch (err) { selectNear(c); }
+    }
+  });
+  function selectNear(btn) {
+    const span = btn.parentElement.querySelector('span');
+    const r = document.createRange(); r.selectNodeContents(span);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    toast('Geselecteerd, kopieer met je toestel');
+  }
+
+  // verberg afgevinkt (per toestel)
+  const hide = document.getElementById('hide');
+  try { hide.checked = localStorage.getItem('feestdag-verberg') === '1'; } catch (e) {}
+  document.body.classList.toggle('hide-done', hide.checked);
+  hide.addEventListener('change', () => {
+    document.body.classList.toggle('hide-done', hide.checked);
+    try { localStorage.setItem('feestdag-verberg', hide.checked ? '1' : '0'); } catch (e) {}
+  });
+
+  // alles wissen, met bevestiging in de pagina
+  const rw = document.getElementById('resetwrap');
+  function showReset() {
+    rw.innerHTML = '<button class="reset" type="button" id="reset">Alle vinkjes wissen</button>';
+    document.getElementById('reset').addEventListener('click', () => {
+      rw.innerHTML = '<div class="confirm">Alle vinkjes op dit toestel wissen? <button class="yes" type="button" id="ry">Ja, wis alles</button><button type="button" id="rn">Annuleer</button></div>';
+      document.getElementById('rn').addEventListener('click', showReset);
+      document.getElementById('ry').addEventListener('click', async () => {
+        const ids = Object.keys(state);
+        state = {}; render(); showReset();
+        if (!db) { saveLocal(); toast('Alles gewist'); return; }
+        try { for (const id of ids) await db.collection('vinkjes').doc(id).delete(); toast('Alles gewist'); }
+        catch (e) { toast('Niet alles kon gewist worden.'); }
+      });
+    });
+  }
+  showReset();
+
+  // ---------- opslaan op dit toestel ----------
+  const sync = document.getElementById('sync');
+  loadLocal(); render();
+  sync.textContent = 'Bewaard op dit toestel';
+  window.addEventListener('storage', e => { if (e.key === LKEY) { loadLocal(); render(); } });
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+})();
+</script>
+</body>
+</html>
