@@ -16,6 +16,9 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 
 ## Gebruik
 
+- **Startscherm**: je totale voortgang en een kaart per lijst, met wat er nog volgt. Tik op een kaart om de lijst te openen.
+- **Tabbalk onderaan**: Start, Mee, Drank, Opbouw en Afsluiten. Het getal toont hoeveel er nog open staat.
+- **Gele telefoonknop** rechtsboven: altijd de contactlijst met belknoppen.
 - Tik op een regel om hem af te vinken. Tik nog eens om het vinkje weg te halen.
 - Tik op de titel van een lijst om ze in of uit te klappen. Een lijst die je helemaal afvinkt, klapt vanzelf dicht. De app onthoudt welke lijsten dicht staan.
 - Onderaan elke lijst kun je zelf iets **toevoegen**. Een eigen item verwijder je met **×** (tik twee keer om te bevestigen).
@@ -27,6 +30,6 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v12` naar `v13`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v13` naar `v14`), zodat toestellen de nieuwe versie ophalen.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).
