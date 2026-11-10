@@ -237,7 +237,9 @@ section.view > details.fold > summary.sh { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plegend { --steel: #d6d5cf; --panel: #1f2023; --item: #2c2e33dd; --wood: #8a6c42; } :root:not([data-theme="light"]) .planbox { --floor: #24262a; --grid: #303237; --wood: #8a6c42; --panel: #1f2023; --item: #2c2e33dd; --hose: #e5533f; --blue: #6a9cf0; --steel: #d6d5cf; } }
 :root[data-theme="dark"] .plegend { --steel: #d6d5cf; --panel: #1f2023; --item: #2c2e33dd; --wood: #8a6c42; }
 :root[data-theme="dark"] .planbox { --floor: #24262a; --grid: #303237; --wood: #8a6c42; --panel: #1f2023; --item: #2c2e33dd; --hose: #e5533f; --blue: #6a9cf0; --steel: #d6d5cf; }
-.planscroll { overflow: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; overscroll-behavior: contain; }
+.planscroll { overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-x pan-y; max-width: 100%; }
+.planscroll.zoomed { cursor: grab; }
+.planscroll.dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 .planinner { width: 100%; }
 .planinner svg { display: block; width: 100%; height: auto; }
 .zoom { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--line); background: var(--card); }
@@ -259,6 +261,28 @@ section.view > details.fold > summary.sh { display: none; }
 .card[data-card="plan"] .ci { background: var(--pipe); color: var(--steel); }
 .card[data-card="plan"] .cn { color: var(--pipe); }
 .card[data-card="plan"] .cbar, .card[data-card="plan"] .cnext { display: none; }
+
+/* ---------- synchroniseren ---------- */
+.syncbox { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.sync-out { display: grid; gap: 10px; }
+.sync-in { display: flex; align-items: center; gap: 12px; }
+.sb-txt { display: grid; gap: 2px; font-size: 14px; min-width: 0; flex: 1; }
+.sb-txt b { font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: .02em; }
+.sb-txt span { color: var(--muted); overflow-wrap: anywhere; }
+.sb-form { display: flex; gap: 8px; }
+.sb-form input { flex: 1; min-width: 0; font: 16px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; }
+.sb-form input:focus-visible { outline: 2px solid var(--pipe); outline-offset: 1px; }
+.sb-form button, .sb-out { flex: none; font: 700 15px var(--display); letter-spacing: .04em; text-transform: uppercase; background: var(--steel); color: var(--on-steel); border: 0; border-radius: 6px; padding: 10px 12px; cursor: pointer; }
+.sb-form button:disabled { opacity: .5; }
+.sb-out { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.sb-msg { margin: 0; font-size: 13.5px; color: var(--muted); }
+.sb-msg:empty { display: none; }
+.dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--green); }
+.dot.busy { background: var(--pipe); animation: pulse 1s ease-in-out infinite; }
+.dot.off { background: var(--muted); }
+.dot.err { background: var(--red); }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .dot.busy { animation: none; } }
 </style>
 </head>
 <body>
@@ -282,6 +306,19 @@ section.view > details.fold > summary.sh { display: none; }
       <div class="hero-txt"><span class="eyebrow" id="today"></span><strong id="herotxt">Alles nog te doen</strong><span id="herosub"></span></div>
     </div>
     <div class="cards" id="cards"></div>
+    <div class="syncbox" id="syncbox" hidden>
+      <div class="sync-out" id="sync-out">
+        <div class="sb-txt"><b>Pc en smartphone gelijk houden</b><span>Meld je aan met je e-mailadres. Je vinkjes en eigen punten lopen dan gelijk op al je toestellen.</span></div>
+        <form class="sb-form" id="sb-mail"><label class="sr" for="sb-email">E-mailadres</label><input id="sb-email" type="email" autocomplete="email" inputmode="email" required placeholder="naam@voorbeeld.be"><button type="submit">Stuur link</button></form>
+        <form class="sb-form" id="sb-code" hidden><label class="sr" for="sb-otp">Code uit de mail</label><input id="sb-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Code uit de mail"><button type="submit">Aanmelden</button></form>
+        <p class="sb-msg" id="sb-msg" role="status"></p>
+      </div>
+      <div class="sync-in" id="sync-in" hidden>
+        <span class="dot" id="sb-dot" aria-hidden="true"></span>
+        <div class="sb-txt"><b id="sb-state">Gesynchroniseerd</b><span id="sb-who"></span></div>
+        <button type="button" class="sb-out" id="sb-logout">Afmelden</button>
+      </div>
+    </div>
     <div class="install" id="install" hidden>
       <div class="install-txt"><b>Zet de app op je beginscherm</b><span>Dan opent ze met één tik en werkt ze ook zonder internet.</span></div>
       <button type="button" id="installbtn" class="installbtn">Installeer</button>
@@ -640,7 +677,7 @@ section.view > details.fold > summary.sh { display: none; }
       </div></div>
       <div class="zoom"><button type="button" id="zout" aria-label="Uitzoomen">−</button><button type="button" id="zin" aria-label="Inzoomen">+</button></div>
     </div>
-    <p class="note">Geschatte indeling, niet op schaal. Draai je toestel of zoom in voor meer detail.</p>
+    <p class="note">Zoom met twee vingers, met + en − of door dubbel te tikken. Ingezoomd veeg je met één vinger over het plan (op de pc: slepen met de muis). Geschatte indeling, niet op schaal.</p>
     <div class="planlegends"><div class="plegend" data-legend="zaal">
     <span><i style="background:var(--steel)"></i>Paal</span>
     <span><i style="background:transparent;outline:2px dashed var(--pipe)"></i>Piñata</span>
@@ -679,6 +716,8 @@ section.view > details.fold > summary.sh { display: none; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="vendor/supabase-2.116.0.js"></script>
+<script src="config.js"></script>
 <script>
 (function () {
   // ---------- inhoud ----------
@@ -965,7 +1004,7 @@ section.view > details.fold > summary.sh { display: none; }
   const CKEY = 'feestdag-eigen-v1';
   let custom = {};
   function loadCustom() { try { custom = JSON.parse(localStorage.getItem(CKEY) || '{}') || {}; } catch (e) { custom = {}; } }
-  function saveCustom() { try { localStorage.setItem(CKEY, JSON.stringify(custom)); } catch (e) {} }
+  function saveCustom() { try { localStorage.setItem(CKEY, JSON.stringify(custom)); } catch (e) {} schedulePush(); }
   const customIds = key => (custom[key] || []).map(x => x.id);
   const sectionKeys = sec => sec.groups.map((g, gi) => sec.id + '-' + gi);
   // een eigen item dat intussen een vast punt werd, verdwijnt uit de eigen lijst; het vinkje gaat mee
@@ -1075,7 +1114,8 @@ section.view > details.fold > summary.sh { display: none; }
   }
 
   function loadLocal() { try { state = JSON.parse(localStorage.getItem(LKEY) || '{}') || {}; } catch (e) { state = {}; } }
-  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(state)); } catch (e) {} }
+  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(state)); } catch (e) {} schedulePush(); }
+  function saveRaw() { try { localStorage.setItem(LKEY, JSON.stringify(state)); localStorage.setItem(CKEY, JSON.stringify(custom)); } catch (e) {} }
 
   const toastEl = document.getElementById('toast');
   let tt;
@@ -1170,7 +1210,7 @@ section.view > details.fold > summary.sh { display: none; }
   function showReset() {
     rw.innerHTML = '<button class="reset" type="button" id="reset">Alle vinkjes wissen</button>';
     document.getElementById('reset').addEventListener('click', () => {
-      rw.innerHTML = '<div class="confirm">Alle vinkjes op dit toestel wissen? <button class="yes" type="button" id="ry">Ja, wis alles</button><button type="button" id="rn">Annuleer</button></div>';
+      rw.innerHTML = '<div class="confirm">Alle vinkjes wissen? <button class="yes" type="button" id="ry">Ja, wis alles</button><button type="button" id="rn">Annuleer</button></div>';
       document.getElementById('rn').addEventListener('click', showReset);
       document.getElementById('ry').addEventListener('click', async () => {
         const ids = Object.keys(state);
@@ -1187,25 +1227,61 @@ section.view > details.fold > summary.sh { display: none; }
   const PKEY = 'feestdag-plan';
   let zoom = 1;
   const inner = document.getElementById('planinner'), pscroll = document.getElementById('planscroll');
-  function setZoom(z) {
-    const old = zoom; zoom = Math.max(1, Math.min(3, z));
-    const cx = (pscroll.scrollLeft + pscroll.clientWidth / 2) / old, cy = (pscroll.scrollTop + pscroll.clientHeight / 2) / old;
+  function setZoom(z, ax, ay) {
+    const old = zoom; zoom = Math.max(1, Math.min(4, z));
+    if (ax == null) { ax = pscroll.clientWidth / 2; ay = pscroll.clientHeight / 2; }
+    const cx = (pscroll.scrollLeft + ax) / old, cy = (pscroll.scrollTop + ay) / old;
     inner.style.width = (zoom * 100) + '%';
-    pscroll.scrollLeft = cx * zoom - pscroll.clientWidth / 2;
-    pscroll.scrollTop = cy * zoom - pscroll.clientHeight / 2;
+    pscroll.scrollLeft = cx * zoom - ax;
+    pscroll.scrollTop = cy * zoom - ay;
+    pscroll.classList.toggle('zoomed', zoom > 1);
     document.getElementById('zout').disabled = zoom <= 1;
-    document.getElementById('zin').disabled = zoom >= 3;
+    document.getElementById('zin').disabled = zoom >= 4;
   }
+  // knijpen met twee vingers om te zoomen; met één vinger verschuif je (gewoon scrollen in het kader)
+  let pinch = null;
+  const touchDist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  pscroll.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { pinch = { d: touchDist(e.touches), z: zoom }; e.preventDefault(); }
+  }, { passive: false });
+  pscroll.addEventListener('touchmove', e => {
+    if (!pinch || e.touches.length !== 2) return;
+    e.preventDefault();
+    const r = pscroll.getBoundingClientRect();
+    const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, my = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+    setZoom(pinch.z * touchDist(e.touches) / pinch.d, mx, my);
+  }, { passive: false });
+  pscroll.addEventListener('touchend', e => { if (e.touches.length < 2) pinch = null; });
+  // dubbeltikken: inzoomen op die plek, of terug naar het hele plan
+  pscroll.addEventListener('dblclick', e => {
+    const r = pscroll.getBoundingClientRect();
+    if (zoom > 1.05) setZoom(1); else setZoom(2.2, e.clientX - r.left, e.clientY - r.top);
+  });
+  // op de pc: slepen met de muis
+  let drag = null;
+  pscroll.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || zoom <= 1) return;
+    drag = { x: e.clientX, y: e.clientY, l: pscroll.scrollLeft, t: pscroll.scrollTop };
+    pscroll.setPointerCapture(e.pointerId); pscroll.classList.add('dragging');
+  });
+  pscroll.addEventListener('pointermove', e => {
+    if (!drag) return;
+    pscroll.scrollLeft = drag.l - (e.clientX - drag.x); pscroll.scrollTop = drag.t - (e.clientY - drag.y);
+  });
+  const endDrag = () => { drag = null; pscroll.classList.remove('dragging'); };
+  pscroll.addEventListener('pointerup', endDrag); pscroll.addEventListener('pointercancel', endDrag);
   function showPlan(k) {
     document.querySelectorAll('svg.plan').forEach(sv => { sv.toggleAttribute('hidden', sv.dataset.plan !== k); });
     document.querySelectorAll('.plegend').forEach(l => { l.hidden = l.dataset.legend !== k; });
     document.querySelectorAll('.seg [data-p]').forEach(b => b.setAttribute('aria-selected', b.dataset.p === k ? 'true' : 'false'));
+    const vb = (document.querySelector(`svg.plan[data-plan="${k}"]`).getAttribute('viewBox') || '0 0 4 3').split(/\s+/).map(Number);
+    pscroll.style.aspectRatio = vb[2] + ' / ' + vb[3];
     try { localStorage.setItem(PKEY, k); } catch (e) {}
     setZoom(1);
   }
   document.querySelector('.seg').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) showPlan(b.dataset.p); });
-  document.getElementById('zin').addEventListener('click', () => setZoom(zoom + .6));
-  document.getElementById('zout').addEventListener('click', () => setZoom(zoom - .6));
+  document.getElementById('zin').addEventListener('click', () => setZoom(zoom * 1.5));
+  document.getElementById('zout').addEventListener('click', () => setZoom(zoom / 1.5));
   let startPlan = 'zaal';
   try { startPlan = localStorage.getItem(PKEY) || 'zaal'; } catch (e) {}
   showPlan(['zaal', 'inkomhal', 'frigo'].includes(startPlan) ? startPlan : 'zaal');
@@ -1274,6 +1350,186 @@ section.view > details.fold > summary.sh { display: none; }
     inst.hidden = true;
     try { localStorage.setItem('feestdag-install-later', '1'); } catch (e) {}
   });
+
+
+  // ---------- synchroniseren via Supabase ----------
+  // Elke gebruiker heeft zijn eigen rijen; pc en smartphone van dezelfde gebruiker lopen zo gelijk.
+  // Samenvoegen gebeurt in drie richtingen met de toestand van de vorige synchronisatie als basis,
+  // zodat iets wat op het andere toestel weggehaald werd, hier niet terugkomt.
+  const CFG = window.PERSONEELSFEEST_CONFIG || {};
+  var sb = null, sess = null, remote = null, pushTimer = null, pushing = false, chan = null;
+  const BKEY = uid => 'feestdag-sync-basis-' + uid;
+  const sbox = document.getElementById('syncbox');
+  function eigenFlat() { const o = {}; Object.keys(custom).forEach(k => custom[k].forEach(x => { o[x.id] = { lijst: k, tekst: x.t }; })); return o; }
+  function saveBase() { if (!sess || !remote) return; try { localStorage.setItem(BKEY(sess.user.id), JSON.stringify({ ticks: Object.keys(remote.ticks), eigen: Object.keys(remote.eigen) })); } catch (e) {} }
+  function loadBase(uid) { try { const b = JSON.parse(localStorage.getItem(BKEY(uid)) || 'null'); if (b) return { ticks: new Set(b.ticks), eigen: new Set(b.eigen) }; } catch (e) {} return null; }
+  function setSync(st, err) {
+    const dot = document.getElementById('sb-dot'), lab = document.getElementById('sb-state');
+    dot.className = 'dot ' + st;
+    lab.textContent = { ok: 'Gesynchroniseerd', busy: 'Bezig met synchroniseren…', off: 'Offline: wordt later gesynchroniseerd', err: 'Synchroniseren lukt niet' }[st] || '';
+    if (st === 'err' && err) {
+      const msg = String(err.message || err);
+      lab.textContent = /feest_(vinkjes|eigen)|42P01|PGRST205|schema cache/i.test(msg + (err.code || '')) ? 'De database is nog niet klaar (supabase/personeelsfeest.sql)' : 'Synchroniseren lukt niet: probeer later opnieuw';
+    }
+    const note = document.getElementById('localnote');
+    note.firstChild.textContent = sess ? 'Je vinkjes worden met je account gesynchroniseerd. ' : 'Je vinkjes worden op dit toestel bewaard. ';
+  }
+  function schedulePush() { if (!sess || !remote) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 350); }
+  function diff() {
+    const e = eigenFlat();
+    return {
+      upE: Object.keys(e).filter(id => !remote.eigen[id] || remote.eigen[id].tekst !== e[id].tekst || remote.eigen[id].lijst !== e[id].lijst),
+      delE: Object.keys(remote.eigen).filter(id => !e[id]),
+      upT: Object.keys(state).filter(id => !remote.ticks[id]),
+      delT: Object.keys(remote.ticks).filter(id => !state[id]),
+      e
+    };
+  }
+  async function push() {
+    if (!sess || !remote) return;
+    if (pushing) { schedulePush(); return; }
+    if (!navigator.onLine) { setSync('off'); return; }
+    const d = diff();
+    if (!d.upE.length && !d.delE.length && !d.upT.length && !d.delT.length) { setSync('ok'); return; }
+    pushing = true; setSync('busy');
+    const uid = sess.user.id;
+    try {
+      if (d.upE.length) {
+        const rows = d.upE.map(id => ({ user_id: uid, id, lijst: d.e[id].lijst, tekst: d.e[id].tekst.slice(0, 200) }));
+        const { error } = await sb.from('feest_eigen').upsert(rows); if (error) throw error;
+        rows.forEach(r => { remote.eigen[r.id] = { lijst: r.lijst, tekst: r.tekst }; });
+      }
+      if (d.upT.length) {
+        const rows = d.upT.map(id => ({ user_id: uid, item_id: id, at: (state[id] && state[id].at) || new Date().toISOString() }));
+        const { error } = await sb.from('feest_vinkjes').upsert(rows); if (error) throw error;
+        rows.forEach(r => { remote.ticks[r.item_id] = r.at; });
+      }
+      if (d.delT.length) {
+        const { error } = await sb.from('feest_vinkjes').delete().eq('user_id', uid).in('item_id', d.delT); if (error) throw error;
+        d.delT.forEach(id => { delete remote.ticks[id]; });
+      }
+      if (d.delE.length) {
+        const { error } = await sb.from('feest_eigen').delete().eq('user_id', uid).in('id', d.delE); if (error) throw error;
+        d.delE.forEach(id => { delete remote.eigen[id]; });
+      }
+      saveBase(); setSync('ok');
+    } catch (err) {
+      setSync(navigator.onLine ? 'err' : 'off', err);
+      clearTimeout(pushTimer); pushTimer = setTimeout(push, 15000);
+    } finally { pushing = false; }
+    const again = diff();
+    if (again.upE.length || again.delE.length || again.upT.length || again.delT.length) schedulePush();
+  }
+  async function pull() {
+    if (!sess) return;
+    setSync('busy');
+    const [t, e] = await Promise.all([
+      sb.from('feest_vinkjes').select('item_id,at'),
+      sb.from('feest_eigen').select('id,lijst,tekst,aangemaakt').order('aangemaakt')
+    ]);
+    if (t.error || e.error) throw (t.error || e.error);
+    const r = { ticks: {}, eigen: {} };
+    t.data.forEach(x => { r.ticks[x.item_id] = x.at; });
+    e.data.forEach(x => { r.eigen[x.id] = { lijst: x.lijst, tekst: x.tekst }; });
+    const base = loadBase(sess.user.id);
+    // vinkjes
+    Object.keys(state).forEach(id => { if (!r.ticks[id] && base && base.ticks.has(id)) delete state[id]; });
+    Object.keys(r.ticks).forEach(id => { if (!state[id] && !(base && base.ticks.has(id))) state[id] = { by: '', at: r.ticks[id] }; });
+    // eigen punten
+    const loc = eigenFlat();
+    Object.keys(loc).forEach(id => { if (!r.eigen[id] && base && base.eigen.has(id)) Object.keys(custom).forEach(k => { custom[k] = custom[k].filter(x => x.id !== id); if (!custom[k].length) delete custom[k]; }); });
+    Object.entries(r.eigen).forEach(([id, x]) => {
+      if (loc[id] || (base && base.eigen.has(id))) return;
+      (custom[x.lijst] = custom[x.lijst] || []).push({ id, t: x.tekst });
+    });
+    remote = r;
+    mergeFixed();
+    saveRaw(); drawCustom(); render();
+    await push();
+    saveBase();
+  }
+  function applyRemote(table, ev) {
+    if (!remote) return;
+    const n = ev.new || {}, o = ev.old || {};
+    if (table === 'feest_vinkjes') {
+      if (ev.eventType === 'DELETE') { delete remote.ticks[o.item_id]; delete state[o.item_id]; }
+      else { remote.ticks[n.item_id] = n.at; if (!state[n.item_id]) state[n.item_id] = { by: '', at: n.at }; }
+    } else {
+      if (ev.eventType === 'DELETE') {
+        delete remote.eigen[o.id];
+        Object.keys(custom).forEach(k => { custom[k] = custom[k].filter(x => x.id !== o.id); if (!custom[k].length) delete custom[k]; });
+        delete state[o.id];
+      } else {
+        remote.eigen[n.id] = { lijst: n.lijst, tekst: n.tekst };
+        const has = Object.values(custom).some(l => l.some(x => x.id === n.id));
+        if (!has) (custom[n.lijst] = custom[n.lijst] || []).push({ id: n.id, t: n.tekst });
+      }
+    }
+    saveRaw(); saveBase(); drawCustom(); render();
+  }
+  function subscribe() {
+    if (chan) { sb.removeChannel(chan); chan = null; }
+    const uid = sess.user.id;
+    chan = sb.channel('feest-' + uid)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feest_vinkjes', filter: 'user_id=eq.' + uid }, ev => applyRemote('feest_vinkjes', ev))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feest_eigen', filter: 'user_id=eq.' + uid }, ev => applyRemote('feest_eigen', ev))
+      .subscribe();
+  }
+  async function startSync() {
+    document.getElementById('sync-out').hidden = true;
+    document.getElementById('sync-in').hidden = false;
+    document.getElementById('sb-who').textContent = sess.user.email || '';
+    try { await pull(); subscribe(); }
+    catch (err) { setSync(navigator.onLine ? 'err' : 'off', err); }
+  }
+  function stopSync() {
+    if (chan) { sb.removeChannel(chan); chan = null; }
+    remote = null; sess = null;
+    document.getElementById('sync-in').hidden = true;
+    document.getElementById('sync-out').hidden = false;
+    setSync('ok');
+  }
+  if (window.supabase && CFG.supabaseUrl && CFG.supabaseAnonKey) {
+    sbox.hidden = false;
+    try {
+      sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'personeelsfeest-auth' } });
+    } catch (e) { sb = null; sbox.hidden = true; }
+  }
+  if (sb) {
+    const msg = document.getElementById('sb-msg');
+    let lastMail = '';
+    document.getElementById('sb-mail').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('sb-email').value.trim();
+      if (!email) return;
+      const btn = e.target.querySelector('button'); btn.disabled = true; msg.textContent = 'Link wordt verstuurd…';
+      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
+      btn.disabled = false;
+      if (error) { msg.textContent = /rate|limit|seconds/i.test(error.message) ? 'Even wachten: er is net al een mail verstuurd. Probeer het binnen een minuut opnieuw.' : 'De mail kon niet verstuurd worden. Controleer het adres en probeer opnieuw.'; return; }
+      lastMail = email;
+      msg.textContent = 'Kijk in je mailbox (ook bij spam) en open de link op dit toestel. Staat er een code in de mail, dan kun je die ook hieronder invullen.';
+      document.getElementById('sb-code').hidden = false;
+    });
+    document.getElementById('sb-code').addEventListener('submit', async e => {
+      e.preventDefault();
+      const token = document.getElementById('sb-otp').value.replace(/\s/g, '');
+      if (!token || !lastMail) return;
+      const { error } = await sb.auth.verifyOtp({ email: lastMail, token, type: 'email' });
+      msg.textContent = error ? 'Die code klopt niet of is verlopen. Vraag een nieuwe link aan.' : '';
+    });
+    document.getElementById('sb-logout').addEventListener('click', async () => {
+      try { await sb.auth.signOut(); } catch (e) {}
+      stopSync(); toast('Afgemeld. Je vinkjes blijven op dit toestel staan.');
+    });
+    sb.auth.onAuthStateChange((ev, s) => {
+      if (s && (!sess || sess.user.id !== s.user.id)) { sess = s; startSync(); if (ev === 'SIGNED_IN') toast('Aangemeld: je toestellen lopen nu gelijk'); }
+      else if (s) sess = s;
+      else if (!s && sess) stopSync();
+    });
+    window.addEventListener('online', () => { if (sess) pull().catch(err => setSync('err', err)); });
+    window.addEventListener('offline', () => { if (sess) setSync('off'); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && sess && remote) pull().catch(() => {}); });
+  }
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
