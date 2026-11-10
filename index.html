@@ -264,8 +264,12 @@ section.view > details.fold > summary.sh { display: none; }
 
 /* ---------- synchroniseren ---------- */
 .syncbox { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.sync-out { display: grid; gap: 10px; }
-.sync-in { display: flex; align-items: center; gap: 12px; }
+.sb-top { display: flex; align-items: center; gap: 12px; }
+.sb-paar { display: grid; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); justify-items: center; }
+.sb-paar .sb-msg { text-align: center; }
+.qr { width: min(230px, 70vw); background: #fff; border-radius: 8px; padding: 10px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.sb-knoppen { display: flex; gap: 8px; }
 .sb-txt { display: grid; gap: 2px; font-size: 14px; min-width: 0; flex: 1; }
 .sb-txt b { font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: .02em; }
 .sb-txt span { color: var(--muted); overflow-wrap: anywhere; }
@@ -307,15 +311,19 @@ section.view > details.fold > summary.sh { display: none; }
     </div>
     <div class="cards" id="cards"></div>
     <div class="syncbox" id="syncbox" hidden>
-      <div class="sync-out" id="sync-out">
-        <div class="sb-txt"><b>Pc en smartphone gelijk houden</b><span>Meld je aan met je e-mailadres. Je vinkjes en eigen punten lopen dan gelijk op al je toestellen.</span></div>
-        <form class="sb-form" id="sb-mail"><label class="sr" for="sb-email">E-mailadres</label><input id="sb-email" type="email" autocomplete="email" inputmode="email" required placeholder="naam@voorbeeld.be"><button type="submit">Stuur link</button></form>
-        <p class="sb-msg" id="sb-msg" role="status"></p>
-      </div>
-      <div class="sync-in" id="sync-in" hidden>
+      <div class="sb-top">
         <span class="dot" id="sb-dot" aria-hidden="true"></span>
-        <div class="sb-txt"><b id="sb-state">Gesynchroniseerd</b><span id="sb-who"></span></div>
-        <button type="button" class="sb-out" id="sb-logout">Afmelden</button>
+        <div class="sb-txt"><b id="sb-state">Gedeelde lijst</b><span id="sb-sub"></span></div>
+        <button type="button" class="sb-out" id="sb-koppel">Koppel toestel</button>
+      </div>
+      <div class="sb-paar" id="sb-paar" hidden>
+        <p class="sb-msg">Scan deze code met je ander toestel, of stuur de link erheen. Dat toestel toont dan dezelfde lijst.</p>
+        <div class="qr" id="qr"></div>
+        <div class="sb-knoppen">
+          <button type="button" class="sb-out" id="sb-kopieer">Kopieer link</button>
+          <button type="button" class="sb-out" id="sb-sluit">Sluit</button>
+        </div>
+        <p class="sb-msg">Deel deze code alleen met je collega's: wie ze heeft, kan de lijst zien en aanpassen.</p>
       </div>
     </div>
     <div class="install" id="install" hidden>
@@ -716,7 +724,7 @@ section.view > details.fold > summary.sh { display: none; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="vendor/supabase-2.116.0.js"></script>
+<script src="vendor/qrcode-generator-1.4.4.js"></script>
 <script src="config.js"></script>
 <script>
 (function () {
@@ -1352,189 +1360,162 @@ section.view > details.fold > summary.sh { display: none; }
   });
 
 
-  // ---------- synchroniseren via Supabase ----------
-  // Elke gebruiker heeft zijn eigen rijen; pc en smartphone van dezelfde gebruiker lopen zo gelijk.
-  // Samenvoegen gebeurt in drie richtingen met de toestand van de vorige synchronisatie als basis,
-  // zodat iets wat op het andere toestel weggehaald werd, hier niet terugkomt.
+  // ---------- gedeelde lijst (zonder aanmelden) ----------
+  // Elke lijst heeft een geheime sleutel. Toestellen met dezelfde sleutel zien dezelfde vinkjes.
+  // Samenvoegen gebeurt met de toestand van de vorige keer als basis, zodat iets wat op het
+  // andere toestel weggehaald werd, hier niet terugkomt.
   const CFG = window.PERSONEELSFEEST_CONFIG || {};
-  var sb = null, sess = null, remote = null, pushTimer = null, pushing = false, chan = null;
-  const BKEY = uid => 'feestdag-sync-basis-' + uid;
+  const SKEY = 'feestdag-sleutel';
+  var sb = null, sleutel = '', remote = null, pushTimer = null, pushing = false, pollTimer = null;
   const sbox = document.getElementById('syncbox');
-  function eigenFlat() { const o = {}; Object.keys(custom).forEach(k => custom[k].forEach(x => { o[x.id] = { lijst: k, tekst: x.t }; })); return o; }
-  function saveBase() { if (!sess || !remote) return; try { localStorage.setItem(BKEY(sess.user.id), JSON.stringify({ ticks: Object.keys(remote.ticks), eigen: Object.keys(remote.eigen) })); } catch (e) {} }
-  function loadBase(uid) { try { const b = JSON.parse(localStorage.getItem(BKEY(uid)) || 'null'); if (b) return { ticks: new Set(b.ticks), eigen: new Set(b.eigen) }; } catch (e) {} return null; }
+  const BKEY = k => 'feestdag-basis-' + k;
+  const eigenFlat = () => { const o = {}; Object.keys(custom).forEach(k => custom[k].forEach(x => { o[x.id] = { lijst: k, tekst: x.t }; })); return o; };
+  function saveBase() { if (!remote) return; try { localStorage.setItem(BKEY(sleutel), JSON.stringify({ v: Object.keys(remote.vink), e: Object.keys(remote.eigen) })); } catch (e) {} }
+  function loadBase() { try { const b = JSON.parse(localStorage.getItem(BKEY(sleutel)) || 'null'); if (b) return { v: new Set(b.v), e: new Set(b.e) }; } catch (e) {} return null; }
+
   function setSync(st, err) {
-    const dot = document.getElementById('sb-dot'), lab = document.getElementById('sb-state');
+    const dot = document.getElementById('sb-dot'), lab = document.getElementById('sb-state'), sub = document.getElementById('sb-sub');
     dot.className = 'dot ' + st;
-    lab.textContent = { ok: 'Gesynchroniseerd', busy: 'Bezig met synchroniseren…', off: 'Offline: wordt later gesynchroniseerd', err: 'Synchroniseren lukt niet' }[st] || '';
-    if (st === 'err' && err) {
-      const msg = String(err.message || err);
-      lab.textContent = /feest_(vinkjes|eigen)|42P01|PGRST205|schema cache/i.test(msg + (err.code || '')) ? 'De database is nog niet klaar (supabase/personeelsfeest.sql)' : 'Synchroniseren lukt niet: probeer later opnieuw';
+    lab.textContent = { ok: 'Gedeelde lijst', busy: 'Bijwerken…', off: 'Offline', err: 'Delen lukt niet' }[st] || '';
+    if (st === 'ok') sub.textContent = 'Je vinkjes staan op al je gekoppelde toestellen.';
+    if (st === 'busy') sub.textContent = 'Even geduld.';
+    if (st === 'off') sub.textContent = 'Je wijzigingen worden later doorgestuurd.';
+    if (st === 'err') {
+      const m = String((err && (err.message || err.hint)) || '');
+      sub.textContent = /feest_(lees|schrijf)|does not exist|PGRST202|schema cache/i.test(m) ? 'De database is nog niet klaar (supabase/personeelsfeest.sql).' : 'Lukt niet. De app probeert het straks opnieuw.';
     }
-    const note = document.getElementById('localnote');
-    note.firstChild.textContent = sess ? 'Je vinkjes worden met je account gesynchroniseerd. ' : 'Je vinkjes worden op dit toestel bewaard. ';
   }
-  function schedulePush() { if (!sess || !remote) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 350); }
+
+  const call = async (fn, body) => {
+    const r = await fetch(CFG.supabaseUrl + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseAnonKey, Authorization: 'Bearer ' + CFG.supabaseAnonKey },
+      body: JSON.stringify(body)
+    });
+    const txt = await r.text();
+    let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch (e) {}
+    if (!r.ok) throw Object.assign(new Error((data && (data.message || data.hint)) || ('HTTP ' + r.status)), { data });
+    return data;
+  };
+
   function diff() {
-    const e = eigenFlat();
-    return {
-      upE: Object.keys(e).filter(id => !remote.eigen[id] || remote.eigen[id].tekst !== e[id].tekst || remote.eigen[id].lijst !== e[id].lijst),
-      delE: Object.keys(remote.eigen).filter(id => !e[id]),
-      upT: Object.keys(state).filter(id => !remote.ticks[id]),
-      delT: Object.keys(remote.ticks).filter(id => !state[id]),
-      e
-    };
+    const e = eigenFlat(), zet = [], weg = [];
+    Object.keys(state).forEach(id => { if (!remote.vink[id]) zet.push({ soort: 'vink', id, at: (state[id] && state[id].at) || new Date().toISOString() }); });
+    Object.keys(remote.vink).forEach(id => { if (!state[id]) weg.push({ soort: 'vink', id }); });
+    Object.keys(e).forEach(id => { const r = remote.eigen[id]; if (!r || r.tekst !== e[id].tekst || r.lijst !== e[id].lijst) zet.push({ soort: 'eigen', id, lijst: e[id].lijst, tekst: e[id].tekst.slice(0, 200) }); });
+    Object.keys(remote.eigen).forEach(id => { if (!e[id]) weg.push({ soort: 'eigen', id }); });
+    return { zet, weg };
   }
+
+  function schedulePush() { if (!sb || !remote) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 400); }
+
   async function push() {
-    if (!sess || !remote) return;
-    if (pushing) { schedulePush(); return; }
+    if (!sb || !remote || pushing) { if (pushing) schedulePush(); return; }
     if (!navigator.onLine) { setSync('off'); return; }
     const d = diff();
-    if (!d.upE.length && !d.delE.length && !d.upT.length && !d.delT.length) { setSync('ok'); return; }
+    if (!d.zet.length && !d.weg.length) { setSync('ok'); return; }
     pushing = true; setSync('busy');
-    const uid = sess.user.id;
     try {
-      if (d.upE.length) {
-        const rows = d.upE.map(id => ({ user_id: uid, id, lijst: d.e[id].lijst, tekst: d.e[id].tekst.slice(0, 200) }));
-        const { error } = await sb.from('feest_eigen').upsert(rows); if (error) throw error;
-        rows.forEach(r => { remote.eigen[r.id] = { lijst: r.lijst, tekst: r.tekst }; });
-      }
-      if (d.upT.length) {
-        const rows = d.upT.map(id => ({ user_id: uid, item_id: id, at: (state[id] && state[id].at) || new Date().toISOString() }));
-        const { error } = await sb.from('feest_vinkjes').upsert(rows); if (error) throw error;
-        rows.forEach(r => { remote.ticks[r.item_id] = r.at; });
-      }
-      if (d.delT.length) {
-        const { error } = await sb.from('feest_vinkjes').delete().eq('user_id', uid).in('item_id', d.delT); if (error) throw error;
-        d.delT.forEach(id => { delete remote.ticks[id]; });
-      }
-      if (d.delE.length) {
-        const { error } = await sb.from('feest_eigen').delete().eq('user_id', uid).in('id', d.delE); if (error) throw error;
-        d.delE.forEach(id => { delete remote.eigen[id]; });
-      }
+      await call('feest_schrijf', { p_sleutel: sleutel, p_zet: d.zet, p_weg: d.weg });
+      d.zet.forEach(x => { if (x.soort === 'vink') remote.vink[x.id] = x.at; else remote.eigen[x.id] = { lijst: x.lijst, tekst: x.tekst }; });
+      d.weg.forEach(x => { if (x.soort === 'vink') delete remote.vink[x.id]; else delete remote.eigen[x.id]; });
       saveBase(); setSync('ok');
     } catch (err) {
       setSync(navigator.onLine ? 'err' : 'off', err);
       clearTimeout(pushTimer); pushTimer = setTimeout(push, 15000);
     } finally { pushing = false; }
-    const again = diff();
-    if (again.upE.length || again.delE.length || again.upT.length || again.delT.length) schedulePush();
   }
+
   async function pull() {
-    if (!sess) return;
-    setSync('busy');
-    const [t, e] = await Promise.all([
-      sb.from('feest_vinkjes').select('item_id,at'),
-      sb.from('feest_eigen').select('id,lijst,tekst,aangemaakt').order('aangemaakt')
-    ]);
-    if (t.error || e.error) throw (t.error || e.error);
-    const r = { ticks: {}, eigen: {} };
-    t.data.forEach(x => { r.ticks[x.item_id] = x.at; });
-    e.data.forEach(x => { r.eigen[x.id] = { lijst: x.lijst, tekst: x.tekst }; });
-    const base = loadBase(sess.user.id);
-    // vinkjes
-    Object.keys(state).forEach(id => { if (!r.ticks[id] && base && base.ticks.has(id)) delete state[id]; });
-    Object.keys(r.ticks).forEach(id => { if (!state[id] && !(base && base.ticks.has(id))) state[id] = { by: '', at: r.ticks[id] }; });
-    // eigen punten
+    if (!sb) return;
+    if (!navigator.onLine) { setSync('off'); return; }
+    if (!remote) setSync('busy');
+    const rows = (await call('feest_lees', { p_sleutel: sleutel })) || [];
+    const r = { vink: {}, eigen: {} };
+    rows.forEach(x => { if (x.soort === 'vink') r.vink[x.id] = x.at; else r.eigen[x.id] = { lijst: x.lijst, tekst: x.tekst }; });
+    const base = loadBase();
+    Object.keys(state).forEach(id => { if (!r.vink[id] && base && base.v.has(id)) delete state[id]; });
+    Object.keys(r.vink).forEach(id => { if (!state[id] && !(base && base.v.has(id))) state[id] = { by: '', at: r.vink[id] }; });
     const loc = eigenFlat();
-    Object.keys(loc).forEach(id => { if (!r.eigen[id] && base && base.eigen.has(id)) Object.keys(custom).forEach(k => { custom[k] = custom[k].filter(x => x.id !== id); if (!custom[k].length) delete custom[k]; }); });
+    Object.keys(loc).forEach(id => {
+      if (r.eigen[id] || !(base && base.e.has(id))) return;
+      Object.keys(custom).forEach(k => { custom[k] = custom[k].filter(x => x.id !== id); if (!custom[k].length) delete custom[k]; });
+    });
     Object.entries(r.eigen).forEach(([id, x]) => {
-      if (loc[id] || (base && base.eigen.has(id))) return;
+      if (loc[id] || (base && base.e.has(id))) return;
       (custom[x.lijst] = custom[x.lijst] || []).push({ id, t: x.tekst });
     });
     remote = r;
-    mergeFixed();
-    saveRaw(); drawCustom(); render();
+    mergeFixed(); saveRaw(); drawCustom(); render();
     await push();
     saveBase();
   }
-  function applyRemote(table, ev) {
-    if (!remote) return;
-    const n = ev.new || {}, o = ev.old || {};
-    if (table === 'feest_vinkjes') {
-      if (ev.eventType === 'DELETE') { delete remote.ticks[o.item_id]; delete state[o.item_id]; }
-      else { remote.ticks[n.item_id] = n.at; if (!state[n.item_id]) state[n.item_id] = { by: '', at: n.at }; }
-    } else {
-      if (ev.eventType === 'DELETE') {
-        delete remote.eigen[o.id];
-        Object.keys(custom).forEach(k => { custom[k] = custom[k].filter(x => x.id !== o.id); if (!custom[k].length) delete custom[k]; });
-        delete state[o.id];
-      } else {
-        remote.eigen[n.id] = { lijst: n.lijst, tekst: n.tekst };
-        const has = Object.values(custom).some(l => l.some(x => x.id === n.id));
-        if (!has) (custom[n.lijst] = custom[n.lijst] || []).push({ id: n.id, t: n.tekst });
-      }
-    }
-    saveRaw(); saveBase(); drawCustom(); render();
-  }
-  function subscribe() {
-    if (chan) { sb.removeChannel(chan); chan = null; }
-    const uid = sess.user.id;
-    chan = sb.channel('feest-' + uid)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'feest_vinkjes', filter: 'user_id=eq.' + uid }, ev => applyRemote('feest_vinkjes', ev))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'feest_eigen', filter: 'user_id=eq.' + uid }, ev => applyRemote('feest_eigen', ev))
-      .subscribe();
-  }
-  async function startSync() {
-    document.getElementById('sync-out').hidden = true;
-    document.getElementById('sync-in').hidden = false;
-    document.getElementById('sb-who').textContent = sess.user.email || '';
-    try { await pull(); subscribe(); }
-    catch (err) { setSync(navigator.onLine ? 'err' : 'off', err); }
-  }
-  function stopSync() {
-    if (chan) { sb.removeChannel(chan); chan = null; }
-    remote = null; sess = null;
-    document.getElementById('sync-in').hidden = true;
-    document.getElementById('sync-out').hidden = false;
-    document.getElementById('sb-mail').hidden = false; document.getElementById('sb-msg').textContent = '';
-    setSync('ok');
-  }
-  if (window.supabase && CFG.supabaseUrl && CFG.supabaseAnonKey) {
+
+  const ververs = () => { if (sb) pull().catch(err => setSync(navigator.onLine ? 'err' : 'off', err)); };
+
+  function startSync() {
     sbox.hidden = false;
-    try {
-      sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'personeelsfeest-auth' } });
-    } catch (e) { sb = null; sbox.hidden = true; }
+    setSync('busy');
+    ververs();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(() => { if (document.visibilityState === 'visible') ververs(); }, 20000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') ververs(); });
+    window.addEventListener('online', ververs);
+    window.addEventListener('offline', () => setSync('off'));
   }
-  if (sb) {
-    const msg = document.getElementById('sb-msg');
-    document.getElementById('sb-mail').addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('sb-email').value.trim();
-      if (!email) return;
-      const btn = e.target.querySelector('button'); btn.disabled = true; msg.textContent = '';
-      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
-      btn.disabled = false;
-      if (error) {
-        const m = String(error.message || ''), c = String(error.code || '');
-        const sec = (m.match(/after (\d+) seconds/i) || [])[1];
-        if (sec) msg.textContent = 'Er is net al een mail verstuurd. Probeer het over ' + sec + ' seconden opnieuw, of gebruik de link uit die mail.';
-        else if (/email.*rate|rate.*limit|over_email_send_rate_limit/i.test(m + ' ' + c) || error.status === 429) msg.textContent = 'Het maximum aantal aanmeldmails per uur is bereikt. Gebruik de link uit de laatste mail die je kreeg, of probeer het over een uur opnieuw.';
-        else msg.textContent = 'Versturen mislukt. Controleer het adres en probeer opnieuw.';
-        return;
+
+  // koppelen: de sleutel staat in de link achter #koppel=
+  function nieuweSleutel() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  const geldig = k => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k || '');
+  const koppelLink = () => location.origin + location.pathname + '#koppel=' + sleutel;
+
+  if (CFG.supabaseUrl && CFG.supabaseAnonKey) {
+    sb = true;
+    const uitLink = (location.hash.match(/koppel=([0-9a-fA-F-]{36})/) || [])[1];
+    try { sleutel = localStorage.getItem(SKEY) || ''; } catch (e) {}
+    if (uitLink && geldig(uitLink)) {
+      sleutel = uitLink.toLowerCase();
+      try { localStorage.setItem(SKEY, sleutel); localStorage.removeItem(BKEY(sleutel)); } catch (e) {}
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      toast('Toestel gekoppeld');
+    } else if (!geldig(sleutel)) {
+      sleutel = nieuweSleutel();
+      try { localStorage.setItem(SKEY, sleutel); } catch (e) {}
+    }
+
+    const paar = document.getElementById('sb-paar'), qrEl = document.getElementById('qr');
+    let qrGetekend = false;
+    document.getElementById('sb-koppel').addEventListener('click', () => {
+      paar.hidden = !paar.hidden;
+      if (!paar.hidden && !qrGetekend) {
+        try {
+          const q = qrcode(0, 'M'); q.addData(koppelLink()); q.make();
+          qrEl.innerHTML = q.createSvgTag({ scalable: true, margin: 1 });
+          qrGetekend = true;
+        } catch (e) { qrEl.textContent = koppelLink(); }
       }
-      e.target.hidden = true;
-      msg.innerHTML = 'Kijk in je mailbox. We stuurden een aanmeldlink naar <strong></strong>. Open die link op dit toestel.';
-      msg.querySelector('strong').textContent = email;
     });
-    document.getElementById('sb-logout').addEventListener('click', async () => {
-      try { await sb.auth.signOut(); } catch (e) {}
-      stopSync(); toast('Afgemeld. Je vinkjes blijven op dit toestel staan.');
+    document.getElementById('sb-sluit').addEventListener('click', () => { paar.hidden = true; });
+    document.getElementById('sb-kopieer').addEventListener('click', () => {
+      const v = koppelLink();
+      try { navigator.clipboard.writeText(v).then(() => toast('Link gekopieerd'), () => toast('Kopiëren lukte niet')); }
+      catch (e) { toast('Kopiëren lukte niet'); }
     });
-    sb.auth.onAuthStateChange((ev, s) => {
-      if (s && (!sess || sess.user.id !== s.user.id)) { sess = s; startSync(); if (ev === 'SIGNED_IN') toast('Aangemeld: je toestellen lopen nu gelijk'); }
-      else if (s) sess = s;
-      else if (!s && sess) stopSync();
-    });
-    window.addEventListener('online', () => { if (sess) pull().catch(err => setSync('err', err)); });
-    window.addEventListener('offline', () => { if (sess) setSync('off'); });
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && sess && remote) pull().catch(() => {}); });
+
+    startSync();
   }
 
   // ---------- altijd de nieuwste versie ----------
   // Bij het openen (en telkens de app terug naar voren komt) vraagt de app aan de site welke versie de nieuwste is.
   // Is die anders dan deze, dan herlaadt ze zichzelf meteen. Onderaan het startscherm staat welke versie je hebt.
-  const VERSION = 21;
+  const VERSION = 22;
   const verline = document.getElementById('verline');
   verline.textContent = 'Versie ' + VERSION;
   if (/[?&]v=\d+/.test(location.search)) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }

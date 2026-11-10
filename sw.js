@@ -1,9 +1,9 @@
 // Bewaart de app op het toestel zodat ze ook zonder internet opent.
-const CACHE = 'personeelsfeest-v21';
+const CACHE = 'personeelsfeest-v22';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'fonts/Barlow-Regular.ttf', 'fonts/Barlow-Medium.ttf', 'fonts/BarlowCondensed-SemiBold.ttf', 'fonts/BarlowCondensed-Bold.ttf',
-  'config.js', 'vendor/supabase-2.116.0.js'
+  'config.js', 'vendor/qrcode-generator-1.4.4.js'
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

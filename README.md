@@ -23,18 +23,19 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 - Tik op een regel om hem af te vinken. Tik nog eens om het vinkje weg te halen.
 - Tik op de titel van een lijst om ze in of uit te klappen. Een lijst die je helemaal afvinkt, klapt vanzelf dicht. De app onthoudt welke lijsten dicht staan.
 - Onderaan elke lijst kun je zelf iets **toevoegen**. Een eigen item verwijder je met **×** (tik twee keer om te bevestigen).
-- Zonder aanmelden worden de vinkjes en eigen items **op je eigen toestel** bewaard.
-- **Pc en smartphone gelijk houden**: meld je onderaan het startscherm aan met je e-mailadres. Je vinkjes en eigen punten lopen dan gelijk op al je toestellen (elke gebruiker heeft zijn eigen lijst).
+- **Pc en smartphone gelijk houden**: geen aanmelden nodig. Tik onderaan het startscherm op **Koppel toestel** en scan de QR-code met het andere toestel. Beide toestellen tonen dan dezelfde lijst.
 - Zet de app op je beginscherm (in de app staat een knop **Installeer**), dan werkt ze ook zonder internet:
   - **iPhone (Safari):** deel-knop → *Zet op beginscherm*
   - **Android (Chrome):** menu ⋮ → *Toevoegen aan startscherm* of *App installeren*
 
-## Synchroniseren instellen (eenmalig)
+## Delen instellen (eenmalig)
 
 De app gebruikt hetzelfde Supabase-project als de veiligheidsrondes en de staalnamen (zie [`config.js`](config.js)).
+Open in Supabase *SQL Editor*, plak de inhoud van [`supabase/personeelsfeest.sql`](supabase/personeelsfeest.sql) en klik *Run*.
+Meer is er niet nodig: geen aanmelden, geen mails, geen instellingen bij *Authentication*.
 
-1. **Database**: open in Supabase *SQL Editor*, plak de inhoud van [`supabase/personeelsfeest.sql`](supabase/personeelsfeest.sql) en klik *Run*. Het script maakt enkel twee nieuwe tabellen aan en raakt de andere apps niet aan.
-2. **Aanmeldlink**: voeg onder *Authentication > URL Configuration* een *Redirect URL* toe: `https://obscuritatis.github.io/personeelsfeest/`. Laat de bestaande staan.
+Elke lijst heeft een geheime sleutel (uuid) die in de koppellink zit. De tabel is afgeschermd; de app kan er enkel aan
+via twee functies die de sleutel vragen. Wie de sleutel heeft, ziet en wijzigt die lijst — deel de QR-code dus enkel met collega's.
 
 ## Aanpassen
 
