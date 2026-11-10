@@ -1,5 +1,5 @@
 // Bewaart de app op het toestel zodat ze ook zonder internet opent.
-const CACHE = 'personeelsfeest-v14';
+const CACHE = 'personeelsfeest-v15';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'fonts/Barlow-Regular.ttf', 'fonts/Barlow-Medium.ttf', 'fonts/BarlowCondensed-SemiBold.ttf', 'fonts/BarlowCondensed-Bold.ttf'
