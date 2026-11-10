@@ -35,11 +35,10 @@ De app gebruikt hetzelfde Supabase-project als de veiligheidsrondes en de staaln
 
 1. **Database**: open in Supabase *SQL Editor*, plak de inhoud van [`supabase/personeelsfeest.sql`](supabase/personeelsfeest.sql) en klik *Run*. Het script maakt enkel twee nieuwe tabellen aan en raakt de andere apps niet aan.
 2. **Aanmeldlink**: voeg onder *Authentication > URL Configuration* een *Redirect URL* toe: `https://obscuritatis.github.io/personeelsfeest/`. Laat de bestaande staan.
-3. **Code in de aanmeldmail** (nodig voor de app op het beginscherm van een iPhone, want een link opent in Safari en niet in die app): zet onder *Authentication > Emails > Magic Link* de regel `Of vul deze code in: {{ .Token }}` in de mail. Dan vul je de code in de app in.
 
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v18` naar `v19`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v19` naar `v20`), zodat toestellen de nieuwe versie ophalen.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).

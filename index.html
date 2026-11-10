@@ -310,7 +310,6 @@ section.view > details.fold > summary.sh { display: none; }
       <div class="sync-out" id="sync-out">
         <div class="sb-txt"><b>Pc en smartphone gelijk houden</b><span>Meld je aan met je e-mailadres. Je vinkjes en eigen punten lopen dan gelijk op al je toestellen.</span></div>
         <form class="sb-form" id="sb-mail"><label class="sr" for="sb-email">E-mailadres</label><input id="sb-email" type="email" autocomplete="email" inputmode="email" required placeholder="naam@voorbeeld.be"><button type="submit">Stuur link</button></form>
-        <form class="sb-form" id="sb-code" hidden><label class="sr" for="sb-otp">Code uit de mail</label><input id="sb-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code uit de mail"><button type="submit">Aanmelden</button></form>
         <p class="sb-msg" id="sb-msg" role="status"></p>
       </div>
       <div class="sync-in" id="sync-in" hidden>
@@ -1487,6 +1486,7 @@ section.view > details.fold > summary.sh { display: none; }
     remote = null; sess = null;
     document.getElementById('sync-in').hidden = true;
     document.getElementById('sync-out').hidden = false;
+    document.getElementById('sb-mail').hidden = false; document.getElementById('sb-msg').textContent = '';
     setSync('ok');
   }
   if (window.supabase && CFG.supabaseUrl && CFG.supabaseAnonKey) {
@@ -1497,32 +1497,17 @@ section.view > details.fold > summary.sh { display: none; }
   }
   if (sb) {
     const msg = document.getElementById('sb-msg');
-    const standaloneApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-    const MKEY = 'feestdag-aanmeld-mail';
-    let lastMail = '';
-    try { lastMail = localStorage.getItem(MKEY) || ''; } catch (e) {}
-    if (lastMail) { document.getElementById('sb-email').value = lastMail; document.getElementById('sb-code').hidden = false; }
     document.getElementById('sb-mail').addEventListener('submit', async e => {
       e.preventDefault();
       const email = document.getElementById('sb-email').value.trim();
       if (!email) return;
-      const btn = e.target.querySelector('button'); btn.disabled = true; msg.textContent = 'Link wordt verstuurd…';
+      const btn = e.target.querySelector('button'); btn.disabled = true; msg.textContent = '';
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
       btn.disabled = false;
-      if (error) { msg.textContent = /rate|limit|seconds/i.test(error.message) ? 'Even wachten: er is net al een mail verstuurd. Probeer het binnen een minuut opnieuw.' : 'De mail kon niet verstuurd worden. Controleer het adres en probeer opnieuw.'; return; }
-      lastMail = email;
-      try { localStorage.setItem(MKEY, email); } catch (e) {}
-      msg.textContent = standaloneApp ? 'Kijk in je mailbox (ook bij spam) en vul de code uit de mail hieronder in. Tik niet op de link: die opent in de browser, niet in deze app.' : 'Kijk in je mailbox (ook bij spam) en open de link op dit toestel, of vul de code uit de mail hieronder in.';
-      document.getElementById('sb-code').hidden = false;
-    });
-    document.getElementById('sb-code').addEventListener('submit', async e => {
-      e.preventDefault();
-      const token = document.getElementById('sb-otp').value.replace(/\s/g, '');
-      if (!lastMail) lastMail = document.getElementById('sb-email').value.trim();
-      if (!token || !lastMail) { msg.textContent = 'Vul eerst je e-mailadres in en vraag een mail aan.'; return; }
-      const { error } = await sb.auth.verifyOtp({ email: lastMail, token, type: 'email' });
-      msg.textContent = error ? 'Die code klopt niet of is verlopen. Vraag een nieuwe mail aan en gebruik de code uit de nieuwste mail.' : '';
-      if (!error) { try { localStorage.removeItem(MKEY); } catch (e) {} document.getElementById('sb-otp').value = ''; }
+      if (error) { msg.textContent = /rate|limit|seconds/i.test(error.message) ? 'Even wachten: er is net al een mail verstuurd. Probeer het binnen een minuut opnieuw.' : 'Versturen mislukt. Controleer het adres en probeer opnieuw.'; return; }
+      e.target.hidden = true;
+      msg.innerHTML = 'Kijk in je mailbox. We stuurden een aanmeldlink naar <strong></strong>. Open die link op dit toestel.';
+      msg.querySelector('strong').textContent = email;
     });
     document.getElementById('sb-logout').addEventListener('click', async () => {
       try { await sb.auth.signOut(); } catch (e) {}
