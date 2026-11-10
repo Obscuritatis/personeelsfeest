@@ -228,6 +228,37 @@ section.view > details.fold > summary.sh { display: none; }
 .tabs a[data-tab="start"] .badge { display: none; }
 @media (max-width: 340px) { .cards { grid-template-columns: 1fr; } .tabs a span { font-size: 11px; } }
 @media (prefers-reduced-motion: reduce) { #main.enter > .view:not([hidden]) { animation: none; } }
+
+/* ---------- plattegrond ---------- */
+.planbox {
+  --floor: #e4e3de; --grid: #d4d3cd; --wood: #c9a46e; --panel: #ffffff; --item: #ffffffcc; --hose: #d23a2a; --blue: #2459b8; --steel: #1e2023;
+  position: relative; background: var(--floor); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plegend { --steel: #d6d5cf; --panel: #1f2023; --item: #2c2e33dd; --wood: #8a6c42; } :root:not([data-theme="light"]) .planbox { --floor: #24262a; --grid: #303237; --wood: #8a6c42; --panel: #1f2023; --item: #2c2e33dd; --hose: #e5533f; --blue: #6a9cf0; --steel: #d6d5cf; } }
+:root[data-theme="dark"] .plegend { --steel: #d6d5cf; --panel: #1f2023; --item: #2c2e33dd; --wood: #8a6c42; }
+:root[data-theme="dark"] .planbox { --floor: #24262a; --grid: #303237; --wood: #8a6c42; --panel: #1f2023; --item: #2c2e33dd; --hose: #e5533f; --blue: #6a9cf0; --steel: #d6d5cf; }
+.planscroll { overflow: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; overscroll-behavior: contain; }
+.planinner { width: 100%; }
+.planinner svg { display: block; width: 100%; height: auto; }
+.zoom { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--line); background: var(--card); }
+.zoom::before { content: "Zoom"; margin-right: auto; font: 600 13px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.zoom button { width: 40px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 600 22px/1 var(--body); cursor: pointer; }
+.zoom button:disabled { opacity: .35; cursor: default; }
+.zoom button:focus-visible { outline: 3px solid var(--pipe); outline-offset: 2px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+.seg button { font: 700 15px var(--display); letter-spacing: .03em; text-transform: uppercase; color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 9px 4px; cursor: pointer; }
+.seg button[aria-selected="true"] { background: var(--steel); color: var(--on-steel); }
+.seg button:focus-visible { outline: 2px solid var(--pipe); outline-offset: 1px; }
+#plan { display: grid; gap: 10px; }
+#plan[hidden] { display: none; }
+.plegend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; font-size: 13px; color: var(--muted);
+  --floor: #e4e3de; --wood: #c9a46e; --panel: #ffffff; --item: #ffffffcc; --hose: #d23a2a; --blue: #2459b8; }
+.plegend span { display: flex; align-items: center; gap: 8px; }
+.plegend i { flex: none; display: inline-block; width: 14px; height: 14px; border-radius: 2px; }
+.card[data-card="plan"] { grid-column: 1 / -1; min-height: 0; grid-template-columns: auto 1fr auto; grid-template-areas: "i t n"; background: var(--steel); color: var(--on-steel); border-color: var(--steel); }
+.card[data-card="plan"] .ci { background: var(--pipe); color: var(--steel); }
+.card[data-card="plan"] .cn { color: var(--pipe); }
+.card[data-card="plan"] .cbar, .card[data-card="plan"] .cnext { display: none; }
 </style>
 </head>
 <body>
@@ -264,6 +295,380 @@ section.view > details.fold > summary.sh { display: none; }
     <p class="note" id="localnote">Je vinkjes worden op dit toestel bewaard. <span id="sync"></span></p>
     <div id="resetwrap"><button class="reset" type="button" id="reset">Alle vinkjes wissen</button></div>
   </div>
+  <section class="view" data-view="plan" hidden id="plan" aria-label="Plattegrond">
+    <div class="seg" role="tablist" aria-label="Kies een plan">
+      <button type="button" role="tab" data-p="zaal" aria-selected="true">Zaal</button>
+      <button type="button" role="tab" data-p="inkomhal" aria-selected="false">Inkomhal</button>
+      <button type="button" role="tab" data-p="frigo" aria-selected="false">Frigo &amp; uitgang</button>
+    </div>
+    <div class="planbox">
+      <div class="planscroll" id="planscroll"><div class="planinner" id="planinner">
+<svg class="plan" data-plan="zaal" role="img" viewBox="-110 0 1310 800" xmlns="http://www.w3.org/2000/svg" aria-label="Plattegrond van de zaal">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M40 0H0V40" fill="none" stroke="var(--grid)" stroke-width="1"/>
+        </pattern>
+        <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="8" height="8" fill="var(--pipe)"/><rect width="3" height="8" fill="var(--steel)"/>
+        </pattern>
+        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--pipe)"/>
+        </marker>
+        <marker id="arrowIn" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--green)"/>
+        </marker>
+      </defs>
+
+      <g id="base" pointer-events="none">
+        <!-- muren -->
+        <rect x="20" y="20" width="1160" height="760" fill="var(--steel)"/>
+        <rect x="40" y="40" width="1120" height="720" fill="var(--floor)"/>
+        <rect x="40" y="40" width="1120" height="720" fill="url(#grid)"/>
+
+        <!-- drie delen -->
+        <text class="zone" x="227" y="600">DEEL 1</text>
+        <text class="zone" x="600" y="600">DEEL 2</text>
+        <text class="zone" x="973" y="600">DEEL 3</text>
+        <g stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="6 8" opacity=".6">
+          <line x1="413" y1="40" x2="413" y2="760"/>
+          <line x1="787" y1="40" x2="787" y2="760"/>
+        </g>
+        <!-- palen -->
+        <g fill="var(--steel)">
+          <rect x="406" y="136" width="14" height="14"/><rect x="406" y="239" width="14" height="14"/><rect x="406" y="342" width="14" height="14"/><rect x="406" y="444" width="14" height="14"/><rect x="406" y="547" width="14" height="14"/><rect x="406" y="650" width="14" height="14"/>
+          <rect x="780" y="136" width="14" height="14"/><rect x="780" y="239" width="14" height="14"/><rect x="780" y="342" width="14" height="14"/><rect x="780" y="444" width="14" height="14"/><rect x="780" y="547" width="14" height="14"/><rect x="780" y="650" width="14" height="14"/>
+        </g>
+
+        <!-- foodtrucks 1-3 tussen deel 2 en 3, tussen paal 2-3, 3-4, 4-5, net in deel 3 -->
+        <g font-family="var(--display)" font-weight="700" text-anchor="middle">
+          <rect x="797" y="256" width="48" height="84" rx="4" fill="var(--item)" stroke="var(--red)" stroke-width="2.5"/>
+          <rect x="797" y="256" width="48" height="16" rx="4" fill="var(--red)" opacity=".3"/>
+          <text x="821" y="312" font-size="28" fill="var(--red)">1</text>
+          <rect x="797" y="358" width="48" height="84" rx="4" fill="var(--item)" stroke="var(--red)" stroke-width="2.5"/>
+          <rect x="797" y="358" width="48" height="16" rx="4" fill="var(--red)" opacity=".3"/>
+          <text x="821" y="414" font-size="28" fill="var(--red)">2</text>
+          <rect x="797" y="461" width="48" height="84" rx="4" fill="var(--item)" stroke="var(--red)" stroke-width="2.5"/>
+          <rect x="797" y="461" width="48" height="16" rx="4" fill="var(--red)" opacity=".3"/>
+          <text x="821" y="517" font-size="28" fill="var(--red)">3</text>
+          <text x="858" y="404" font-size="15" fill="var(--red)" letter-spacing=".06em" text-anchor="start">FOODTRUCKS</text>
+        </g>
+
+        <!-- podium: onderaan deel 1, tegen de muur, gecentreerd, 50% breedte, tot de onderste palenrij -->
+        <rect x="134" y="657" width="186" height="103" fill="var(--item)" stroke="var(--blue)" stroke-width="2.5"/>
+        <text x="227" y="716" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="24" fill="var(--blue)" letter-spacing=".04em">PODIUM</text>
+
+        <!-- gordijnen tussen deel 2 en 3, overal waar geen foodtruck staat -->
+        <g fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round">
+          <path d="M787 40 Q792 43.0 787 46.0 Q782 49.0 787 52.0 Q792 55.0 787 58.0 Q782 61.0 787 64.0 Q792 67.0 787 70.0 Q782 73.0 787 76.0 Q792 79.0 787 82.0 Q782 85.0 787 88.0 Q792 91.0 787 94.0 Q782 97.0 787 100.0 Q792 103.0 787 106.0 Q782 109.0 787 112.0 Q792 115.0 787 118.0 Q782 121.0 787 124.0 Q792 127.0 787 130.0 Q782 133.0 787 136.0"/>
+          <path d="M787 150 Q792 153.0 787 156.0 Q782 159.0 787 162.0 Q792 165.0 787 168.0 Q782 171.0 787 174.0 Q792 177.0 787 180.0 Q782 183.0 787 186.0 Q792 189.0 787 192.0 Q782 195.0 787 198.0 Q792 201.0 787 204.0 Q782 207.0 787 210.0 Q792 213.0 787 216.0 Q782 219.0 787 222.0 Q792 225.0 787 228.0 Q782 231.0 787 234.0 L787 239"/>
+          <path d="M787 554 Q792 557.0 787 560.0 Q782 563.0 787 566.0 Q792 569.0 787 572.0 Q782 575.0 787 578.0 Q792 581.0 787 584.0 Q782 587.0 787 590.0 Q792 593.0 787 596.0 Q782 599.0 787 602.0 Q792 605.0 787 608.0 Q782 611.0 787 614.0 Q792 617.0 787 620.0 Q782 623.0 787 626.0 Q792 629.0 787 632.0 Q782 635.0 787 638.0 Q792 641.0 787 644.0 Q782 647.0 787 650.0"/>
+          <path d="M787 664 Q792 667.0 787 670.0 Q782 673.0 787 676.0 Q792 679.0 787 682.0 Q782 685.0 787 688.0 Q792 691.0 787 694.0 Q782 697.0 787 700.0 Q792 703.0 787 706.0 Q782 709.0 787 712.0 Q792 715.0 787 718.0 Q782 721.0 787 724.0 Q792 727.0 787 730.0 Q782 733.0 787 736.0 Q792 739.0 787 742.0 Q782 745.0 787 748.0 Q792 751.0 787 754.0 Q782 757.0 787 760.0"/>
+        </g>
+
+        <!-- 40 feesttafels 220x80 cm, 8 pers. = 320 plaatsen; blokken van 2 tafels, schuin 35°, 2 kolommen met middengang -->
+        <g id="tafels" fill="var(--muted)">
+          <g transform="translate(502 125.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 186.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 247.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 308.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 369.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 430.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 491.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 552.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 613.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(502 674.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 125.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 186.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 247.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 308.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 369.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 430.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 491.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 552.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 613.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+          <g transform="translate(640 674.5) rotate(-35)"><rect x="-41.1" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="-36.0" cy="-12.5" r="3.2"/><circle cx="-36.0" cy="12.5" r="3.2"/><circle cx="-25.7" cy="-12.5" r="3.2"/><circle cx="-25.7" cy="12.5" r="3.2"/><circle cx="-15.4" cy="-12.5" r="3.2"/><circle cx="-15.4" cy="12.5" r="3.2"/><circle cx="-5.1" cy="-12.5" r="3.2"/><circle cx="-5.1" cy="12.5" r="3.2"/><rect x="0.0" y="-7.5" width="41.1" height="15.0" fill="var(--wood)" stroke="var(--ink)" stroke-width="1"/><circle cx="5.1" cy="-12.5" r="3.2"/><circle cx="5.1" cy="12.5" r="3.2"/><circle cx="15.4" cy="-12.5" r="3.2"/><circle cx="15.4" cy="12.5" r="3.2"/><circle cx="25.7" cy="-12.5" r="3.2"/><circle cx="25.7" cy="12.5" r="3.2"/><circle cx="36.0" cy="-12.5" r="3.2"/><circle cx="36.0" cy="12.5" r="3.2"/></g>
+        </g>
+
+        <!-- elektriciteitsaansluiting: onderaan deel 2, in het midden -->
+        <rect x="586" y="744" width="28" height="22" rx="3" fill="var(--pipe)" stroke="var(--steel)" stroke-width="2"/>
+        <path d="M603 747 L593 757 L600 757 L596 764 L607 753 L600 753 Z" fill="var(--steel)"/>
+        <text x="600" y="735" text-anchor="middle" font-family="var(--display)" font-weight="600" font-size="14" fill="var(--ink)" letter-spacing=".06em">ELEKTRICITEIT</text>
+
+        <!-- inkom: linkermuur van deel 1, in het midden, even breed als de garagepoort -->
+        <rect x="20" y="340" width="20" height="120" fill="var(--floor)"/>
+        <g stroke="var(--steel)" stroke-width="2" fill="none">
+          <line x1="20" y1="340" x2="40" y2="340"/><line x1="20" y1="460" x2="40" y2="460"/>
+        </g>
+        <line x1="50" y1="400" x2="118" y2="400" stroke="var(--green)" stroke-width="4" marker-end="url(#arrowIn)"/>
+        <text x="55" y="318" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">INKOM</text>
+        <text class="t-small" x="55" y="334">ingang voor de gasten</text>
+
+        <!-- 16 statafels voor de bar, raster 4 t/m 6 van boven, versprongen 6-5-5 -->
+        <g id="statafels">
+          <circle cx="90" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="90" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="145" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="145" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="200" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="200" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="255" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="255" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="310" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="310" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="365" cy="180" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="365" cy="180" r="2" fill="var(--ink)"/>
+          <circle cx="117.5" cy="220" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="117.5" cy="220" r="2" fill="var(--ink)"/>
+          <circle cx="172.5" cy="220" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="172.5" cy="220" r="2" fill="var(--ink)"/>
+          <circle cx="227.5" cy="220" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="227.5" cy="220" r="2" fill="var(--ink)"/>
+          <circle cx="282.5" cy="220" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="282.5" cy="220" r="2" fill="var(--ink)"/>
+          <circle cx="337.5" cy="220" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="337.5" cy="220" r="2" fill="var(--ink)"/>
+          <circle cx="117.5" cy="260" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="117.5" cy="260" r="2" fill="var(--ink)"/>
+          <circle cx="172.5" cy="260" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="172.5" cy="260" r="2" fill="var(--ink)"/>
+          <circle cx="227.5" cy="260" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="227.5" cy="260" r="2" fill="var(--ink)"/>
+          <circle cx="282.5" cy="260" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="282.5" cy="260" r="2" fill="var(--ink)"/>
+          <circle cx="337.5" cy="260" r="9" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/><circle cx="337.5" cy="260" r="2" fill="var(--ink)"/>
+        </g>
+
+        <!-- piñata: deel 1, raster 10 van boven, raster 5 en 6 van links -->
+        <rect x="200" y="400" width="80" height="40" fill="var(--pipe)" fill-opacity=".22" stroke="var(--pipe)" stroke-width="2.5" stroke-dasharray="7 5"/>
+        <text x="240" y="426" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="16" fill="var(--ink)" letter-spacing=".05em">PIÑATA</text>
+        <text class="t-small" x="240" y="458" text-anchor="middle">hangt boven deze zone</text>
+
+        <!-- verlichtingsregeling: deel 1, linkerbovenhoek (aan/uit + dimmen) -->
+        <rect x="50" y="44" width="40" height="26" rx="3" fill="var(--panel)" stroke="var(--steel)" stroke-width="2"/>
+        <circle cx="62" cy="57" r="5" fill="none" stroke="var(--pipe)" stroke-width="2.5"/>
+        <line x1="72" y1="52" x2="84" y2="52" stroke="var(--ink)" stroke-width="2"/><line x1="72" y1="57" x2="84" y2="57" stroke="var(--ink)" stroke-width="2"/><line x1="72" y1="62" x2="84" y2="62" stroke="var(--ink)" stroke-width="2"/>
+        <circle cx="80" cy="52" r="2.2" fill="var(--pipe)"/><circle cx="75" cy="57" r="2.2" fill="var(--pipe)"/><circle cx="82" cy="62" r="2.2" fill="var(--pipe)"/>
+        <line x1="70" y1="72" x2="70" y2="116" stroke="var(--muted)" stroke-width="1.5"/>
+        <text x="48" y="132" font-family="var(--display)" font-weight="700" font-size="14" fill="var(--ink)" letter-spacing=".04em">VERLICHTING</text>
+        <text class="t-small" x="48" y="148">aan/uit + dimmen</text>
+
+        <!-- deur in raster 2 van boven, naar de frigocel -->
+        <line x1="-22" y1="100" x2="-78" y2="100" stroke="var(--blue)" stroke-width="4"/>
+        <path d="M-90 100 L-76 92 L-76 108 Z" fill="var(--blue)"/>
+        <text x="-56" y="84" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--blue)" letter-spacing=".04em">FRIGOCEL</text>
+        <rect x="20" y="82" width="20" height="36" fill="var(--floor)"/>
+        <g stroke="var(--ink)" stroke-width="2" fill="none">
+          <line x1="20" y1="118" x2="-16" y2="118"/><path d="M20 82 A36 36 0 0 0 -16 118"/>
+        </g>
+
+        <!-- cocktails en mocktails: deel 1, net om de hoek rechts van de inkom -->
+        <rect x="50" y="476" width="38" height="124" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="100" y="526" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--ink)" letter-spacing=".03em">COCKTAILS &amp;</text>
+        <text x="100" y="543" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--ink)" letter-spacing=".03em">MOCKTAILS</text>
+
+        <!-- garagepoort: rechtermuur van deel 3, in het midden -->
+        <rect x="1160" y="340" width="20" height="120" fill="url(#hatch)"/>
+        <line x1="1148" y1="400" x2="1080" y2="400" stroke="var(--pipe)" stroke-width="4" marker-end="url(#arrow)"/>
+        <text class="t-display" x="1145" y="318" text-anchor="end" font-size="17" fill="var(--ink)">GARAGEPOORT</text>
+        <text class="t-small" x="1145" y="334" text-anchor="end">foodtrucks rijden hier in</text>
+
+        <!-- bar: bovenaan deel 1, in het midden -->
+        <rect x="107" y="40" width="240" height="10" fill="var(--muted)" opacity=".7"/>
+        <rect x="107" y="52" width="240" height="44" rx="2" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text class="t-display" x="227" y="82" text-anchor="middle" font-size="22" fill="var(--ink)">BAR</text>
+        <text class="t-small" x="227" y="116" text-anchor="middle">koelkasten achter de bar</text>
+      </g>
+    </svg>
+<svg hidden class="plan" data-plan="inkomhal" role="img" viewBox="-70 0 1340 800" xmlns="http://www.w3.org/2000/svg" aria-label="Plattegrond van de inkomhal">
+      <defs>
+        <pattern id="grid2" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="var(--grid)" stroke-width="1"/></pattern>
+        <marker id="arrowG" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--green)"/>
+        </marker>
+        <marker id="arrowM" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <g pointer-events="none">
+        <!-- vloer: gang, gang naar toiletten, inham -->
+        <rect x="-70" width="1340" height="800" fill="var(--bg)"/>
+        <g fill="var(--floor)">
+          <rect x="80" y="400" width="1040" height="330"/>
+          <rect x="299" y="30" width="124" height="370"/>
+          <rect x="470" y="200" width="590" height="200"/>
+        </g>
+        <g fill="url(#grid2)">
+          <rect x="80" y="400" width="1040" height="330"/>
+          <rect x="299" y="30" width="124" height="370"/>
+          <rect x="470" y="200" width="590" height="200"/>
+        </g>
+
+        <!-- rode loper -->
+        <rect x="96" y="522" width="1008" height="120" fill="var(--red)" opacity=".2"/>
+        <g stroke="var(--red)" stroke-width="2" stroke-dasharray="10 7">
+          <line x1="96" y1="522" x2="1104" y2="522"/><line x1="96" y1="642" x2="1104" y2="642"/>
+        </g>
+        <text x="420" y="590" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="22" fill="var(--red)" letter-spacing=".12em">RODE LOPER</text>
+
+        <!-- muren -->
+        <g stroke="var(--steel)" stroke-width="14" stroke-linecap="square" fill="none">
+          <line x1="80" y1="730" x2="1120" y2="730"/>
+          <line x1="80" y1="400" x2="80" y2="480"/><line x1="80" y1="650" x2="80" y2="730"/>
+          <line x1="1120" y1="400" x2="1120" y2="490"/><line x1="1120" y1="640" x2="1120" y2="730"/>
+          <line x1="80" y1="400" x2="299" y2="400"/>
+          <line x1="299" y1="400" x2="299" y2="30"/><line x1="423" y1="30" x2="423" y2="400"/>
+          <line x1="423" y1="400" x2="709" y2="400"/><line x1="853" y1="400" x2="1120" y2="400"/>
+          <line x1="470" y1="400" x2="470" y2="200"/><line x1="470" y1="200" x2="1060" y2="200"/><line x1="1060" y1="200" x2="1060" y2="400"/>
+        </g>
+
+        <!-- buitendeur: dubbele deur links -->
+        <g stroke="var(--ink)" stroke-width="2" fill="none">
+          <line x1="80" y1="480" x2="140" y2="480"/><path d="M140 480 A60 60 0 0 1 80 540"/>
+          <line x1="80" y1="650" x2="140" y2="650"/><path d="M140 650 A60 60 0 0 0 80 590"/>
+        </g>
+        <line x1="-30" y1="565" x2="66" y2="565" stroke="var(--green)" stroke-width="4" marker-end="url(#arrowG)"/>
+        <text x="10" y="460" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">BUITENDEUR</text>
+        <text class="t-small" x="10" y="476" text-anchor="middle">dubbele deur</text>
+
+        <!-- deuren naar de zaal: dubbele deur rechts -->
+        <g stroke="var(--ink)" stroke-width="2" fill="none">
+          <line x1="1120" y1="490" x2="1060" y2="490"/><path d="M1060 490 A60 60 0 0 0 1120 550"/>
+          <line x1="1120" y1="640" x2="1060" y2="640"/><path d="M1060 640 A60 60 0 0 1 1120 580"/>
+        </g>
+        <line x1="1134" y1="565" x2="1220" y2="565" stroke="var(--green)" stroke-width="4" marker-end="url(#arrowG)"/>
+        <text x="1185" y="460" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">ZAAL</text>
+        <text class="t-small" x="1185" y="476" text-anchor="middle">inkom deel 1</text>
+
+        <!-- toiletten -->
+        <line x1="361" y1="300" x2="361" y2="70" stroke="var(--muted)" stroke-width="3" marker-end="url(#arrowM)"/>
+        <text x="361" y="340" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">TOILETTEN</text>
+
+        <!-- inham: kapstokken en fotobooth -->
+        <line x1="490" y1="222" x2="720" y2="222" stroke="var(--ink)" stroke-width="4"/>
+        <g stroke="var(--ink)" stroke-width="2">
+          <line x1="505" y1="222" x2="505" y2="236"/><line x1="535" y1="222" x2="535" y2="236"/><line x1="565" y1="222" x2="565" y2="236"/><line x1="595" y1="222" x2="595" y2="236"/><line x1="625" y1="222" x2="625" y2="236"/><line x1="655" y1="222" x2="655" y2="236"/><line x1="685" y1="222" x2="685" y2="236"/><line x1="715" y1="222" x2="715" y2="236"/>
+        </g>
+        <text x="605" y="290" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">KAPSTOKKEN</text>
+        <rect x="880" y="222" width="160" height="110" rx="3" fill="var(--item)" stroke="var(--blue)" stroke-width="2.5"/>
+        <text x="960" y="284" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--blue)">FOTOBOOTH</text>
+        <text class="t-small" x="781" y="380" text-anchor="middle">doorgang inham</text>
+
+        <!-- tafels: tombola -->
+        <rect x="680" y="680" width="320" height="38" fill="var(--wood)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="840" y="704" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--ink)">TOMBOLA</text>
+        <text class="t-small" x="840" y="668" text-anchor="middle">tombola van Luc</text>
+      </g>
+    </svg>
+<svg hidden class="plan" data-plan="frigo" role="img" viewBox="-70 -20 1340 820" xmlns="http://www.w3.org/2000/svg" aria-label="Plattegrond van de tussenruimte en de frigocel">
+      <defs>
+        <pattern id="hatchR3" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="var(--red)" fill-opacity=".08"/><rect width="3" height="10" fill="var(--red)" fill-opacity=".35"/></pattern>
+        <pattern id="grid3" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="var(--grid)" stroke-width="1"/></pattern>
+        <marker id="arrowG3" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--green)"/>
+        </marker>
+        <marker id="arrowR3" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill="var(--red)"/>
+        </marker>
+      </defs>
+      <g pointer-events="none">
+        <rect x="-70" y="-20" width="1340" height="820" fill="var(--bg)"/>
+        <!-- vloer -->
+        <rect x="60" y="100" width="1064" height="568" fill="var(--floor)"/>
+        <rect x="60" y="100" width="1064" height="568" fill="url(#grid3)"/>
+        <!-- frigocel iets koeler getint -->
+        <rect x="60" y="100" width="248" height="568" fill="var(--blue)" opacity=".07"/>
+
+        <!-- muren -->
+        <g stroke="var(--steel)" stroke-width="14" stroke-linecap="square" fill="none">
+          <!-- buitenomtrek -->
+          <line x1="60" y1="100" x2="820" y2="100"/><line x1="924" y1="100" x2="1124" y2="100"/>
+          <line x1="60" y1="100" x2="60" y2="668"/>
+          <line x1="60" y1="668" x2="960" y2="668"/><line x1="1064" y1="668" x2="1124" y2="668"/>
+          <line x1="1124" y1="100" x2="1124" y2="252"/><line x1="1124" y1="372" x2="1124" y2="668"/>
+          <!-- wand tussen frigocel en tussenruimte -->
+          <line x1="308" y1="100" x2="308" y2="428"/><line x1="308" y1="540" x2="308" y2="668"/>
+        </g>
+
+        <!-- ruimtenamen -->
+        <text x="184" y="300" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="30" fill="var(--blue)" letter-spacing=".06em">FRIGOCEL</text>
+        <text x="716" y="480" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="30" fill="var(--grid)" letter-spacing=".06em">TUSSENRUIMTE</text>
+
+        <!-- instructies -->
+        <g font-family="var(--body)" font-size="14" fill="var(--ink)" text-anchor="middle">
+          <text x="184" y="340" font-weight="600">Bakken dienen steeds vol te zijn.</text>
+          <text x="184" y="362">Als er drank uitgeschonken is,</text>
+          <text x="184" y="382">vul de bak dan op met</text>
+          <text x="184" y="402">lege flesjes.</text>
+        </g>
+
+        <rect x="470" y="292" width="492" height="86" rx="4" fill="var(--panel)" stroke="var(--pipe)" stroke-width="2.5"/>
+        <text x="716" y="318" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--ink)" letter-spacing=".06em">FORMULIER</text>
+        <text x="716" y="342" text-anchor="middle" font-family="var(--body)" font-size="14" font-weight="600" fill="var(--ink)">Registreer op het formulier hoeveel er nog over is.</text>
+        <text x="716" y="364" text-anchor="middle" font-family="var(--body)" font-size="14" fill="var(--ink)">Niet geconsumeerde drank wordt niet gefactureerd.</text>
+
+        <rect x="440" y="580" width="480" height="74" fill="var(--wood)" fill-opacity=".18" stroke="var(--wood)" stroke-width="2" stroke-dasharray="7 5"/>
+        <text x="680" y="610" text-anchor="middle" font-family="var(--body)" font-size="14" font-weight="600" fill="var(--ink)">Stockeer hier de bakken die gevuld zijn met lege flesjes.</text>
+        <text x="680" y="632" text-anchor="middle" font-family="var(--body)" font-size="14" fill="var(--ink)">Ook hier dienen de bakken vol te zijn.</text>
+
+        <!-- deur frigocel -->
+        <g stroke="var(--ink)" stroke-width="2" fill="none">
+          <line x1="308" y1="540" x2="420" y2="540"/><path d="M308 428 A112 112 0 0 1 420 540"/>
+        </g>
+        <text x="372" y="420" font-family="var(--display)" font-weight="700" font-size="15" fill="var(--ink)">DEUR FRIGO</text>
+
+        <!-- buitendeur: afsluiten bij vertrek -->
+        <rect x="820" y="92" width="104" height="16" fill="var(--floor)"/>
+        <line x1="924" y1="100" x2="924" y2="-4" stroke="var(--red)" stroke-width="2.5"/>
+        <path d="M820 100 A104 104 0 0 1 924 -4" fill="none" stroke="var(--red)" stroke-width="2"/>
+        <!-- slot -->
+        <g transform="translate(872 150)">
+          <rect x="-13" y="-4" width="26" height="20" rx="3" fill="var(--red)"/>
+          <path d="M-8 -4 V-10 A8 8 0 0 1 8 -10 V-4" fill="none" stroke="var(--red)" stroke-width="3"/>
+          <circle cx="0" cy="5" r="2.6" fill="var(--panel)"/>
+        </g>
+        <text x="872" y="196" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--red)">BUITENDEUR · AFSLUITEN</text>
+        <text class="t-small" x="872" y="214" text-anchor="middle">uitgang bij het verlaten van de zaal</text>
+
+        <!-- deur naar de keuken: vrij houden -->
+        <rect x="952" y="548" width="120" height="113" fill="url(#hatchR3)" stroke="var(--red)" stroke-width="2"/>
+        <text x="1012" y="596" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="16" fill="var(--red)">VRIJ HOUDEN</text>
+        <text x="1012" y="614" text-anchor="middle" font-family="var(--body)" font-size="13" font-weight="600" fill="var(--red)">niets voorzetten</text>
+        <rect x="960" y="660" width="104" height="16" fill="var(--floor)"/>
+        <line x1="1064" y1="668" x2="1064" y2="772" stroke="var(--ink)" stroke-width="2"/>
+        <path d="M960 668 A104 104 0 0 0 1064 772" fill="none" stroke="var(--ink)" stroke-width="2"/>
+        <text x="944" y="712" text-anchor="end" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">KEUKEN</text>
+        <text class="t-small" x="944" y="729" text-anchor="end">deur naar de keuken</text>
+
+        <!-- sleutelkastje -->
+        <rect x="1094" y="134" width="22" height="40" rx="2" fill="var(--pipe)" stroke="var(--steel)" stroke-width="2"/>
+        <circle cx="1105" cy="148" r="4" fill="none" stroke="var(--steel)" stroke-width="2"/><line x1="1105" y1="152" x2="1105" y2="164" stroke="var(--steel)" stroke-width="2"/>
+        <text x="1082" y="150" text-anchor="end" font-family="var(--display)" font-weight="700" font-size="16" fill="var(--ink)">SLEUTELKASTJE</text>
+        <text class="t-small" x="1082" y="167" text-anchor="end">sleutels achterlaten bij vertrek</text>
+
+        <!-- doorgang naar de zaal -->
+        <rect x="1116" y="252" width="16" height="120" fill="var(--floor)"/>
+        <line x1="1136" y1="312" x2="1222" y2="312" stroke="var(--green)" stroke-width="4" marker-end="url(#arrowG3)"/>
+        <text x="1190" y="280" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="17" fill="var(--ink)">ZAAL</text>
+        <text class="t-small" x="1190" y="296" text-anchor="middle">deel 1, bij de bar</text>
+      </g>
+    </svg>
+      </div></div>
+      <div class="zoom"><button type="button" id="zout" aria-label="Uitzoomen">−</button><button type="button" id="zin" aria-label="Inzoomen">+</button></div>
+    </div>
+    <p class="note">Geschatte indeling, niet op schaal. Draai je toestel of zoom in voor meer detail.</p>
+    <div class="planlegends"><div class="plegend" data-legend="zaal">
+    <span><i style="background:var(--steel)"></i>Paal</span>
+    <span><i style="background:transparent;outline:2px dashed var(--pipe)"></i>Piñata</span>
+    <span><i style="background:var(--green)"></i>Inkom</span>
+    <span><i style="background:var(--pipe)"></i>Elektriciteitsaansluiting</span>
+    <span><i style="background:var(--panel);outline:2px solid var(--steel)"></i>Verlichtingsregeling</span>
+    <span><i style="background:var(--wood)"></i>Bar</span>
+    <span><i style="background:var(--item);outline:2px solid var(--red)"></i>Foodtruck 1–3</span>
+    <span><i style="background:var(--item);outline:2px solid var(--blue)"></i>Podium</span>
+    <span><i style="background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 5px)"></i>Gordijn</span>
+    <span><i style="background:var(--wood);border-radius:50%"></i>Statafel</span>
+    <span><i style="background:var(--wood)"></i>Lange tafel 220 × 80 cm, 8 plaatsen</span>
+    <span><i style="background:repeating-linear-gradient(45deg,var(--pipe) 0 5px,var(--steel) 5px 8px)"></i>Garagepoort</span>
+  </div><div class="plegend" data-legend="inkomhal" hidden>
+    <span><i style="background:var(--green)"></i>In- en uitgang</span>
+    <span><i style="background:var(--red);opacity:.5"></i>Rode loper</span>
+    <span><i style="background:var(--wood)"></i>Tombola</span>
+    <span><i style="background:var(--item);outline:2px solid var(--blue)"></i>Fotobooth</span>
+    <span><i style="background:var(--ink);height:4px;vertical-align:3px"></i>Kapstokken</span>
+  </div><div class="plegend" data-legend="frigo" hidden>
+    <span><i style="background:var(--red)"></i>Buitendeur, afsluiten bij vertrek</span>
+    <span><i style="background:var(--pipe);outline:2px solid var(--steel)"></i>Sleutelkastje</span>
+    <span><i style="background:var(--green)"></i>Doorgang naar de zaal</span>
+    <span><i style="background:var(--blue);opacity:.35"></i>Frigocel</span>
+    <span><i style="background:var(--wood);opacity:.5;outline:2px dashed var(--wood)"></i>Stock bakken met lege flesjes</span>
+    <span><i style="background:repeating-linear-gradient(45deg,var(--red) 0 2px,transparent 2px 6px);outline:2px solid var(--red)"></i>Deur keuken, vrij houden</span>
+  </div></div>
+  </section>
   <div class="bar" id="listbar" hidden>
     <label class="switch"><input type="checkbox" id="hide"> Verberg afgevinkt</label>
     <span class="bar-n" id="listn"></span>
@@ -470,12 +875,13 @@ section.view > details.fold > summary.sh { display: none; }
     afsluiten: '<path d="M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>',
     vooraf: '<path d="M8 4h8v3H8zM6 6H5v15h14V6h-1M9 13l2 2 4-4"/>',
     helpers: '<path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .8 3 3 3 6"/>',
+    plan: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/>',
     contact: '<path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/>'
   };
   const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[k] || ''}</svg>`;
   const TABS = [['start', 'Start'], ['mee', 'Mee'], ['drank', 'Drank'], ['opbouw', 'Opbouw'], ['afsluiten', 'Afsluiten']];
   document.getElementById('tabbar').innerHTML = `<div class="tabs">${TABS.map(([k, l]) => `<a href="#${k}" data-tab="${k}">${ico(k)}<span>${l}</span><b class="badge" data-badge="${k}"></b></a>`).join('')}</div>`;
-  const CARDS = SECTIONS.map(s => [s.id, s.title]).concat([['helpers', 'Helpers'], ['contact', 'Contact']]);
+  const CARDS = [['plan', 'Plattegrond']].concat(SECTIONS.map(s => [s.id, s.title]), [['helpers', 'Helpers'], ['contact', 'Contact']]);
   document.getElementById('cards').innerHTML = CARDS.map(([k, t]) => `<a class="card" href="#${k}" data-card="${k}"><span class="ci">${ico(k)}</span><span class="ct">${esc(t)}</span><span class="cn" data-cn="${k}"></span><span class="cbar"><i data-cbar="${k}"></i></span><span class="cnext" data-cnext="${k}"></span></a>`).join('');
 
   function crewHTML() {
@@ -509,6 +915,7 @@ section.view > details.fold > summary.sh { display: none; }
     if (hc) hc.textContent = inside ? `${present} nu` : `${CREW.length}`;
     if (hn) hn.textContent = inside ? 'aanwezig volgens het schema' : 'helpers en hun uren';
     const cc = document.querySelector('[data-cn="contact"]'); if (cc) cc.textContent = CONTACTS.length + ' personen';
+    const pc = document.querySelector('[data-cn="plan"]'); if (pc) pc.textContent = 'zaal · inkomhal · frigo';
   }
   drawNow(); setInterval(drawNow, 60000);
 
@@ -776,11 +1183,38 @@ section.view > details.fold > summary.sh { display: none; }
   }
   showReset();
 
+  // ---------- plattegrond ----------
+  const PKEY = 'feestdag-plan';
+  let zoom = 1;
+  const inner = document.getElementById('planinner'), pscroll = document.getElementById('planscroll');
+  function setZoom(z) {
+    const old = zoom; zoom = Math.max(1, Math.min(3, z));
+    const cx = (pscroll.scrollLeft + pscroll.clientWidth / 2) / old, cy = (pscroll.scrollTop + pscroll.clientHeight / 2) / old;
+    inner.style.width = (zoom * 100) + '%';
+    pscroll.scrollLeft = cx * zoom - pscroll.clientWidth / 2;
+    pscroll.scrollTop = cy * zoom - pscroll.clientHeight / 2;
+    document.getElementById('zout').disabled = zoom <= 1;
+    document.getElementById('zin').disabled = zoom >= 3;
+  }
+  function showPlan(k) {
+    document.querySelectorAll('svg.plan').forEach(sv => { sv.toggleAttribute('hidden', sv.dataset.plan !== k); });
+    document.querySelectorAll('.plegend').forEach(l => { l.hidden = l.dataset.legend !== k; });
+    document.querySelectorAll('.seg [data-p]').forEach(b => b.setAttribute('aria-selected', b.dataset.p === k ? 'true' : 'false'));
+    try { localStorage.setItem(PKEY, k); } catch (e) {}
+    setZoom(1);
+  }
+  document.querySelector('.seg').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) showPlan(b.dataset.p); });
+  document.getElementById('zin').addEventListener('click', () => setZoom(zoom + .6));
+  document.getElementById('zout').addEventListener('click', () => setZoom(zoom - .6));
+  let startPlan = 'zaal';
+  try { startPlan = localStorage.getItem(PKEY) || 'zaal'; } catch (e) {}
+  showPlan(['zaal', 'inkomhal', 'frigo'].includes(startPlan) ? startPlan : 'zaal');
+
   // ---------- schermen ----------
   let currentView = 'start';
   const scrollPos = {};
-  const VIEWS = ['start'].concat(SECTIONS.map(x => x.id), ['helpers', 'contact']);
-  const TITLES = Object.fromEntries(SECTIONS.map(x => [x.id, x.title]).concat([['helpers', 'Helpers'], ['contact', 'Contact']]));
+  const VIEWS = ['start', 'plan'].concat(SECTIONS.map(x => x.id), ['helpers', 'contact']);
+  const TITLES = Object.fromEntries(SECTIONS.map(x => [x.id, x.title]).concat([['helpers', 'Helpers'], ['contact', 'Contact'], ['plan', 'Plattegrond']]));
   function showView(v, fromHash) {
     if (!VIEWS.includes(v)) v = 'start';
     scrollPos[currentView] = window.scrollY;

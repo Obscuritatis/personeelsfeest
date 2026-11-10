@@ -6,6 +6,7 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 
 ## Wat staat erin
 
+- **Plattegrond**: zaal, inkomhal en frigo & uitgang, met legende en zoom
 - **Mee te nemen**: materiaal en wie wat meebrengt
 - **Drank**: de bestelde drank met aantallen, om af te vinken bij levering
 - **Opbouw**: per zone (deel 1, 2, 3, inkomhal, frigo)
@@ -30,6 +31,6 @@ Afvinklijst voor de dag van het personeelsfeest, om op de smartphone te gebruike
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v15` naar `v16`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v16` naar `v17`), zodat toestellen de nieuwe versie ophalen.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).
