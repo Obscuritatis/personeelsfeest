@@ -39,6 +39,6 @@ De app gebruikt hetzelfde Supabase-project als de veiligheidsrondes en de staaln
 ## Aanpassen
 
 De inhoud staat bovenaan het script in `index.html`, in de lijsten `SECTIONS` (de taken) en `CREW` (de helpers en hun uren).
-Na een aanpassing: verhoog in `sw.js` het nummer in `CACHE` (bijv. van `v19` naar `v20`), zodat toestellen de nieuwe versie ophalen.
+Na een aanpassing: verhoog het versienummer op **drie** plaatsen naar hetzelfde getal: `VERSION` in `index.html`, `v` in `version.json` en `CACHE` in `sw.js`. De app vergelijkt bij het openen haar eigen nummer met `version.json` en herlaadt zichzelf als er een nieuwere versie is. Onderaan het startscherm staat welke versie je hebt.
 
 Lettertypes: Barlow en Barlow Condensed, SIL Open Font License (zie `fonts/OFL.txt`).

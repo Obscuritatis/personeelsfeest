@@ -1,5 +1,5 @@
 // Bewaart de app op het toestel zodat ze ook zonder internet opent.
-const CACHE = 'personeelsfeest-v19';
+const CACHE = 'personeelsfeest-v20';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'fonts/Barlow-Regular.ttf', 'fonts/Barlow-Medium.ttf', 'fonts/BarlowCondensed-SemiBold.ttf', 'fonts/BarlowCondensed-Bold.ttf',
@@ -15,8 +15,9 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (new URL(e.request.url).origin !== self.location.origin) return;
+  if (new URL(e.request.url).pathname.endsWith('version.json')) return;
   e.respondWith(
-    fetch(e.request).then(res => {
+    fetch(e.request, { cache: 'no-cache' }).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;

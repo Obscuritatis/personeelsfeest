@@ -329,6 +329,7 @@ section.view > details.fold > summary.sh { display: none; }
       <button type="button" class="later" id="later">Later</button>
     </div>
     <p class="note" id="localnote">Je vinkjes worden op dit toestel bewaard. <span id="sync"></span></p>
+    <p class="note" id="verline"></p>
     <div id="resetwrap"><button class="reset" type="button" id="reset">Alle vinkjes wissen</button></div>
   </div>
   <section class="view" data-view="plan" hidden id="plan" aria-label="Plattegrond">
@@ -1522,6 +1523,38 @@ section.view > details.fold > summary.sh { display: none; }
     window.addEventListener('offline', () => { if (sess) setSync('off'); });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && sess && remote) pull().catch(() => {}); });
   }
+
+  // ---------- altijd de nieuwste versie ----------
+  // Bij het openen (en telkens de app terug naar voren komt) vraagt de app aan de site welke versie de nieuwste is.
+  // Is die anders dan deze, dan herlaadt ze zichzelf meteen. Onderaan het startscherm staat welke versie je hebt.
+  const VERSION = 20;
+  const verline = document.getElementById('verline');
+  verline.textContent = 'Versie ' + VERSION;
+  if (/[?&]v=\d+/.test(location.search)) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
+  let checking = false;
+  async function checkVersion() {
+    if (checking || !navigator.onLine || location.protocol === 'file:') return;
+    checking = true;
+    try {
+      const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+      const latest = (await r.json()).v;
+      if (latest === VERSION) { verline.textContent = 'Versie ' + VERSION + ' · je hebt de nieuwste versie'; try { sessionStorage.removeItem('feestdag-herlaad'); } catch (e) {} }
+      else if (latest > VERSION) {
+        let tried = '';
+        try { tried = sessionStorage.getItem('feestdag-herlaad') || ''; } catch (e) {}
+        if (tried === String(latest)) { verline.textContent = 'Versie ' + VERSION + ' · versie ' + latest + ' wordt klaargezet, open de app zo meteen opnieuw'; }
+        else {
+          try { sessionStorage.setItem('feestdag-herlaad', String(latest)); } catch (e) {}
+          try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+          location.replace(location.pathname + '?v=' + latest + location.hash);
+        }
+      }
+    } catch (e) { verline.textContent = 'Versie ' + VERSION + (navigator.onLine ? '' : ' · offline'); }
+    checking = false;
+  }
+  checkVersion();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
+  window.addEventListener('online', checkVersion);
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
