@@ -1505,7 +1505,14 @@ section.view > details.fold > summary.sh { display: none; }
       const btn = e.target.querySelector('button'); btn.disabled = true; msg.textContent = '';
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
       btn.disabled = false;
-      if (error) { msg.textContent = /rate|limit|seconds/i.test(error.message) ? 'Even wachten: er is net al een mail verstuurd. Probeer het binnen een minuut opnieuw.' : 'Versturen mislukt. Controleer het adres en probeer opnieuw.'; return; }
+      if (error) {
+        const m = String(error.message || ''), c = String(error.code || '');
+        const sec = (m.match(/after (\d+) seconds/i) || [])[1];
+        if (sec) msg.textContent = 'Er is net al een mail verstuurd. Probeer het over ' + sec + ' seconden opnieuw, of gebruik de link uit die mail.';
+        else if (/email.*rate|rate.*limit|over_email_send_rate_limit/i.test(m + ' ' + c) || error.status === 429) msg.textContent = 'Het maximum aantal aanmeldmails per uur is bereikt. Gebruik de link uit de laatste mail die je kreeg, of probeer het over een uur opnieuw.';
+        else msg.textContent = 'Versturen mislukt. Controleer het adres en probeer opnieuw.';
+        return;
+      }
       e.target.hidden = true;
       msg.innerHTML = 'Kijk in je mailbox. We stuurden een aanmeldlink naar <strong></strong>. Open die link op dit toestel.';
       msg.querySelector('strong').textContent = email;
@@ -1527,7 +1534,7 @@ section.view > details.fold > summary.sh { display: none; }
   // ---------- altijd de nieuwste versie ----------
   // Bij het openen (en telkens de app terug naar voren komt) vraagt de app aan de site welke versie de nieuwste is.
   // Is die anders dan deze, dan herlaadt ze zichzelf meteen. Onderaan het startscherm staat welke versie je hebt.
-  const VERSION = 20;
+  const VERSION = 21;
   const verline = document.getElementById('verline');
   verline.textContent = 'Versie ' + VERSION;
   if (/[?&]v=\d+/.test(location.search)) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
